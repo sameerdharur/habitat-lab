@@ -4,7 +4,7 @@ TRAINER_NAME: "ddppo"
 ENV_NAME: "NavRLEnv"
 SIMULATOR_GPU_ID: 0
 TORCH_GPU_ID: 0
-VIDEO_OPTION: []
+VIDEO_OPTION: ["disk"]
 TENSORBOARD_DIR: "tb"
 VIDEO_DIR: "video_dir"
 TEST_EPISODE_COUNT: -1
@@ -22,10 +22,6 @@ FORCE_TORCH_SINGLE_THREADED: True
 
 RL:
   SUCCESS_REWARD: 2.5
-
-  POLICY:
-    name: "PointNavResNetPolicy"
-
   PPO:
     # ppo params
     clip_param: 0.2
@@ -46,7 +42,8 @@ RL:
 
     use_normalized_advantage: False
 
-    hidden_size: 512
+    #hidden_size: 512 # For the RGB model
+    hidden_size: 1024 # For the Depth model
 
     # Use double buffered sampling, typically helps
     # when environment time is similar or large than
@@ -58,17 +55,20 @@ RL:
     # The PyTorch distributed backend to use
     distrib_backend: NCCL
     # Visual encoder backbone
-    pretrained_weights: data/ddppo-models/gibson-2plus-resnet50.pth
+    #pretrained_weights: data/ddppo-models/gibson-2plus-mp3d-train-val-test-se-resneXt50-rgb.pth # RGB model
+    pretrained_weights: data/ddppo-models/gibson-2plus-se-resneXt101-lstm1024.pth # Depth model
     # Initialize with pretrained weights
-    pretrained: False
+    pretrained: True
     # Initialize just the visual encoder backbone with pretrained weights
-    pretrained_encoder: False
+    pretrained_encoder: True
     # Whether or not the visual encoder backbone will be trained.
-    train_encoder: True
+    train_encoder: False
     # Whether or not to reset the critic linear layer
     reset_critic: True
 
     # Model parameters
-    backbone: resnet50
+    #backbone: resnet50
+    #backbone: se_resneXt50 # For the RGB model
+    backbone: se_resneXt101 # For the Depth model
     rnn_type: LSTM
     num_recurrent_layers: 2

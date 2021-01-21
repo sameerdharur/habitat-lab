@@ -71,7 +71,7 @@ class CategoricalNet(nn.Module):
 
     def forward(self, x: Tensor) -> CustomFixedCategorical:
         x = self.linear(x)
-        return CustomFixedCategorical(logits=x)
+        return x, CustomFixedCategorical(logits=x)
 
 
 def linear_decay(epoch: int, total_num_updates: int) -> float:

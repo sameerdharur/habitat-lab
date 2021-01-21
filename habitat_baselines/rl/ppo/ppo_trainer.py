@@ -9,7 +9,7 @@ import os
 import random
 import time
 from collections import defaultdict, deque
-from typing import Any, Dict, List, Optional
+from typing import Any, DefaultDict, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -54,6 +54,13 @@ from habitat_baselines.utils.common import (
     generate_video,
 )
 from habitat_baselines.utils.env_utils import construct_envs
+from habitat.utils.visualizations.xai_utils import ( 
+    compute_grad_cam, 
+    observations_to_image, 
+    generate_video, 
+    write_over_gradcam_maps,
+    compute_saliency_maps
+)
 
 
 @baseline_registry.register_trainer(name="ddppo")
