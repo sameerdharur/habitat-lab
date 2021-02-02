@@ -21,10 +21,11 @@ TASK:
     DIMENSIONALITY: 2
   GOAL_SENSOR_UUID: pointgoal_with_gps_compass
 
-  MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL']
+  MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'COLLISIONS']
   SUCCESS:
     SUCCESS_DISTANCE: 0.2
 DATASET:
   TYPE: PointNav-v1
-  SPLIT: train
-  DATA_PATH: data/datasets/pointnav/mp3d/v1/{split}/{split}.json.gz
+  SPLIT: val
+  DATA_PATH: /srv/share/datasets/habitat-sim-datasets/pointnav/mp3d/v1/{split}/{split}.json.gz
+  SCENES_DIR: data/scene_datasets/basis_mp3d

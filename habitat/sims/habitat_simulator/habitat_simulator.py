@@ -20,10 +20,10 @@ import numpy as np
 from gym import spaces
 from gym.spaces.box import Box
 from numpy import ndarray
-
+import magnum as mn
 if TYPE_CHECKING:
     from torch import Tensor
-
+import pdb
 import habitat_sim
 from habitat.core.dataset import Episode
 from habitat.core.registry import registry
@@ -41,6 +41,7 @@ from habitat.core.simulator import (
     VisualObservation,
 )
 from habitat.core.spaces import Space
+from habitat_sim.nav import NavMeshSettings
 
 RGBSENSOR_DIMENSION = 3
 
@@ -232,6 +233,13 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         )
         self._prev_sim_obs: Optional[Observations] = None
 
+        # NavMesh related settings :
+        self.navmesh_settings = NavMeshSettings()
+        self.navmesh_settings.set_defaults()
+        self.navmesh_settings.agent_radius = agent_config.RADIUS
+        self.navmesh_settings.agent_height = agent_config.HEIGHT
+
+
     def create_sim_config(
         self, _sensor_suite: SensorSuite
     ) -> habitat_sim.Configuration:
@@ -359,6 +367,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
 
     def reset(self) -> Observations:
         sim_obs = super().reset()
+        self.counter = 0
         if self._update_agents_state():
             sim_obs = self.get_sensor_observations()
 
@@ -369,7 +378,109 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         sim_obs = super().step(action)
         self._prev_sim_obs = sim_obs
         observations = self._sensor_suite.get_observations(sim_obs)
+        self.counter += 1
+        if self.counter % 10 == 0:
+            self.init_objects(super())
         return observations
+
+    def set_object_in_front_of_agent(self, sim, obj_id, z_offset=-1.5):
+        r"""
+        Adds an object in front of the agent at some distance.
+        """
+        #print("Agent : ")
+        #print(self.get_agent(0))
+        #agent_transform = sim.agents[0].scene_node.transformation_matrix()
+        agent_transform = self.get_agent(0).scene_node.transformation_matrix()
+        obj_translation = agent_transform.transform_point(
+            np.array([0, 0, z_offset])
+        )
+        sim.set_translation(obj_translation, obj_id)
+
+        obj_node = sim.get_object_scene_node(obj_id)
+        xform_bb = habitat_sim.geo.get_transformed_bb(
+            obj_node.cumulative_bb, obj_node.transformation
+        )
+
+        # also account for collision margin of the scene
+        scene_collision_margin = 0.04
+        y_translation = mn.Vector3(
+            0, xform_bb.size_y() / 2.0 + scene_collision_margin, 0
+        )
+        sim.set_translation(y_translation + sim.get_translation(obj_id), obj_id)
+
+    def init_objects(self, sim):
+        # Manager of Object Attributes Templates
+        obj_attr_mgr = sim.get_object_template_manager()
+        #print("Object Template Manager : {}".format(obj_attr_mgr))
+        #print("SIM Config : ")
+        #print(self.sim_config)
+        #print("Habitat Config: ")
+        #print(self.habitat_config)
+        obj_attr_mgr.load_configs("data/test_assets/objects")
+
+        # Add a chair into the scene.
+        obj_path = "data/test_assets/objects/chair"
+        chair_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
+        chair_attr = obj_attr_mgr.get_template_by_ID(chair_template_id)
+        obj_attr_mgr.register_template(chair_attr)
+
+        # Object's initial position 3m away from the agent.
+        object_id = sim.add_object_by_handle(chair_attr.handle)
+        self.set_object_in_front_of_agent(sim, object_id, -5.0)
+        sim.set_object_motion_type(
+            habitat_sim.physics.MotionType.STATIC, object_id
+        )
+
+        # Object's final position 7m away from the agent
+        #goal_id = sim.add_object_by_handle(chair_attr.handle)
+        #self.set_object_in_front_of_agent(sim, goal_id, -7.0)
+        #sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, goal_id)
+        self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
+
+        return object_id
+
+    def _initialize_objects(self):
+        objects = self.habitat_config.objects[0]
+        obj_attr_mgr = self.get_object_template_manager()
+        obj_attr_mgr.load_configs(
+            str(os.path.join(data_path, "test_assets/objects"))
+        )
+        # first remove all existing objects
+        existing_object_ids = self.get_existing_object_ids()
+
+        if len(existing_object_ids) > 0:
+            for obj_id in existing_object_ids:
+                self.remove_object(obj_id)
+
+        self.sim_object_to_objid_mapping = {}
+        self.objid_to_sim_object_mapping = {}
+
+        if objects is not None:
+            object_template = objects["object_template"]
+            object_pos = objects["position"]
+            object_rot = objects["rotation"]
+
+            object_template_id = obj_attr_mgr.load_object_configs(
+                object_template
+            )[0]
+            object_attr = obj_attr_mgr.get_template_by_ID(object_template_id)
+            obj_attr_mgr.register_template(object_attr)
+
+            object_id = self.add_object_by_handle(object_attr.handle)
+            self.sim_object_to_objid_mapping[object_id] = objects["object_id"]
+            self.objid_to_sim_object_mapping[objects["object_id"]] = object_id
+
+            self.set_translation(object_pos, object_id)
+            if isinstance(object_rot, list):
+                object_rot = quat_from_coeffs(object_rot)
+
+            object_rot = quat_to_magnum(object_rot)
+            self.set_rotation(object_rot, object_id)
+
+            self.set_object_motion_type(MotionType.STATIC, object_id)
+
+        # Recompute the navmesh after placing all the objects.
+        self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
 
     def render(self, mode: str = "rgb") -> Any:
         r"""

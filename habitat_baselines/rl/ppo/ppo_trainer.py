@@ -846,6 +846,12 @@ class PPOTrainer(BaseRLTrainer):
 
             self.envs.close()
 
+
+    def activations_hook(self, module, input, output):
+        self.activations = output
+        self.activations.to(self.device)
+
+
     def _eval_checkpoint(
         self,
         checkpoint_path: str,
@@ -894,6 +900,10 @@ class PPOTrainer(BaseRLTrainer):
         self.agent.load_state_dict(ckpt_dict["state_dict"])
         self.actor_critic = self.agent.actor_critic
 
+        # Setting the layer to be used for Grad-CAM
+        gradcam_layer = self.actor_critic.net.visual_encoder.backbone.layer4[2].convs[6].requires_grad_(True)
+        gradcam_layer.register_forward_hook(self.activations_hook)
+
         observations = self.envs.reset()
         batch = batch_obs(
             observations, device=self.device, cache=self._obs_batching_cache
@@ -929,6 +939,10 @@ class PPOTrainer(BaseRLTrainer):
         rgb_frames = [
             [] for _ in range(self.config.NUM_ENVIRONMENTS)
         ]  # type: List[List[np.ndarray]]
+
+        gradcam_frames = [
+            [] for _ in range(self.config.NUM_PROCESSES)
+        ]
         if len(self.config.VIDEO_OPTION) > 0:
             os.makedirs(self.config.VIDEO_DIR, exist_ok=True)
 
@@ -947,27 +961,39 @@ class PPOTrainer(BaseRLTrainer):
 
         pbar = tqdm.tqdm(total=number_of_eval_episodes)
         self.actor_critic.eval()
+        self.frame_count = 0
+        # Be able to backprop through the LSTM for Grad-CAM
+        self.actor_critic.net.state_encoder.train()
         while (
             len(stats_episodes) < number_of_eval_episodes
             and self.envs.num_envs > 0
         ):
+            self.frame_count += 1
             current_episodes = self.envs.current_episodes()
+            prior_frame = observations
+            #input_obs_tensors = batch['rgb'] # These are the *tensors* of the input observations to be used for saliency maps
+            #input_obs_tensors.requires_grad_(True)
+            #batch['depth'].requires_grad_(True)
+            #batch['rgb'].requires_grad_(True)
 
-            with torch.no_grad():
-                (
-                    _,
+            (
+                    values,
                     actions,
-                    _,
+                    actions_log_probs,
                     test_recurrent_hidden_states,
-                ) = self.actor_critic.act(
+                    distribution, scores, features 
+               ) = self.actor_critic.act(
                     batch,
                     test_recurrent_hidden_states,
                     prev_actions,
                     not_done_masks,
                     deterministic=False,
-                )
+            )
 
-                prev_actions.copy_(actions)  # type: ignore
+            prev_actions.copy_(actions)  # type: ignore
+
+            action_labels = {0:'STOP', 1:'MOVE FORWARD', 2: 'TURN LEFT', 3:'TURN RIGHT'}
+            action_labels_set = {0,1,2,3}
 
             # NB: Move actions to CPU.  If CUDA tensors are
             # sent in to env.step(), that will create CUDA contexts
@@ -1029,7 +1055,7 @@ class PPOTrainer(BaseRLTrainer):
                         generate_video(
                             video_option=self.config.VIDEO_OPTION,
                             video_dir=self.config.VIDEO_DIR,
-                            images=rgb_frames[i],
+                            images=gradcam_frames[i],
                             episode_id=current_episodes[i].episode_id,
                             checkpoint_idx=checkpoint_index,
                             metrics=self._extract_scalars_from_info(infos[i]),
@@ -1037,14 +1063,26 @@ class PPOTrainer(BaseRLTrainer):
                         )
 
                         rgb_frames[i] = []
+                        gradcam_frames[i] = []
+                        self.frame_count = 0
 
                 # episode continues
                 elif len(self.config.VIDEO_OPTION) > 0:
-                    # TODO move normalization / channel changing out of the policy and undo it here
-                    frame = observations_to_image(
-                        {k: v[i] for k, v in batch.items()}, infos[i]
-                    )
-                    rgb_frames[i].append(frame)
+                    frame, egocentric_view, top_down_map = observations_to_image(prior_frame[i], infos[i])
+                    gradcam_output = compute_grad_cam(scores, actions.item(), self.activations, egocentric_view, self.envs.num_envs, self.device)
+                    gradcam_output = write_over_gradcam_maps(gradcam_output, action_labels[actions.item()], self.frame_count, "GRADCAM")
+                    #saliency_output = compute_saliency_maps(scores, actions.item(), batch['depth'], egocentric_view, self.envs.num_envs, self.device)
+                    #saliency_output = write_over_gradcam_maps(saliency_output, action_labels[actions.item()], self.frame_count, "SALIENCY")
+                    gradcam_write = np.concatenate((egocentric_view, gradcam_output, top_down_map), axis=1)
+                    #gradcam_write = np.concatenate((egocentric_view, gradcam_output, top_down_map), axis=1)
+                    #gradcam_write = np.concatenate((egocentric_view, saliency_output, top_down_map), axis=1)
+                    gradcam_frames[i].append(gradcam_write)
+                    #del saliency_output
+                    del gradcam_write
+                    del frame
+                    del egocentric_view
+                    del top_down_map
+            batch = batch_obs(observations, device=self.device)
 
             not_done_masks = not_done_masks.to(device=self.device)
             (

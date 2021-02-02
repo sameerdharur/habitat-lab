@@ -1,0 +1,1738 @@
+2021-02-02 16:37:17,011 config: BASE_TASK_CONFIG_PATH: configs/tasks/pointnav_mp3d.yaml
+CHECKPOINT_FOLDER: data/new_checkpoints
+CHECKPOINT_INTERVAL: 250
+CMD_TRAILING_OPTS: []
+ENV_NAME: NavRLEnv
+EVAL:
+  SPLIT: val
+  USE_CKPT_CONFIG: False
+EVAL_CKPT_PATH_DIR: data/new_checkpoints/gibson-2plus-se-resneXt101-lstm1024.pth
+FORCE_BLIND_POLICY: False
+LOG_FILE: train.log
+LOG_INTERVAL: 10
+NUM_PROCESSES: 1
+NUM_UPDATES: 10000
+ORBSLAM2:
+  ANGLE_TH: 0.2617993877991494
+  BETA: 100
+  CAMERA_HEIGHT: 1.25
+  DEPTH_DENORM: 10.0
+  DIST_REACHED_TH: 0.15
+  DIST_TO_STOP: 0.05
+  D_OBSTACLE_MAX: 4.0
+  D_OBSTACLE_MIN: 0.1
+  H_OBSTACLE_MAX: 1.25
+  H_OBSTACLE_MIN: 0.375
+  MAP_CELL_SIZE: 0.1
+  MAP_SIZE: 40
+  MIN_PTS_IN_OBSTACLE: 320.0
+  NEXT_WAYPOINT_TH: 0.5
+  NUM_ACTIONS: 3
+  PLANNER_MAX_STEPS: 500
+  PREPROCESS_MAP: True
+  SLAM_SETTINGS_PATH: habitat_baselines/slambased/data/mp3d3_small1k.yaml
+  SLAM_VOCAB_PATH: habitat_baselines/slambased/data/ORBvoc.txt
+PROFILING:
+  CAPTURE_START_STEP: -1
+  NUM_STEPS_TO_CAPTURE: -1
+RL:
+  DDPPO:
+    backbone: se_resneXt101
+    distrib_backend: GLOO
+    num_recurrent_layers: 2
+    pretrained: True
+    pretrained_encoder: True
+    pretrained_weights: data/ddppo-models/gibson-2plus-se-resneXt101-lstm1024.pth
+    reset_critic: True
+    rnn_type: LSTM
+    sync_frac: 0.6
+    train_encoder: False
+  POLICY:
+    OBS_TRANSFORMS:
+      CENTER_CROPPER:
+        HEIGHT: 256
+        WIDTH: 256
+      CUBE2EQ:
+        HEIGHT: 256
+        SENSOR_UUIDS: []
+        WIDTH: 512
+      CUBE2FISH:
+        FOV: 180
+        HEIGHT: 256
+        PARAMS: (0.2, 0.2, 0.2)
+        SENSOR_UUIDS: []
+        WIDTH: 256
+      ENABLED_TRANSFORMS: ()
+      EQ2CUBE:
+        HEIGHT: 256
+        SENSOR_UUIDS: []
+        WIDTH: 256
+      RESIZE_SHORTEST_EDGE:
+        SIZE: 256
+    name: PointNavResNetPolicy
+  PPO:
+    clip_param: 0.2
+    entropy_coef: 0.01
+    eps: 1e-05
+    gamma: 0.99
+    hidden_size: 1024
+    lr: 0.00025
+    max_grad_norm: 0.2
+    num_mini_batch: 2
+    num_steps: 128
+    ppo_epoch: 2
+    reward_window_size: 50
+    tau: 0.95
+    use_gae: True
+    use_linear_clip_decay: False
+    use_linear_lr_decay: False
+    use_normalized_advantage: False
+    value_loss_coef: 0.5
+  REWARD_MEASURE: distance_to_goal
+  SLACK_REWARD: -0.01
+  SUCCESS_MEASURE: spl
+  SUCCESS_REWARD: 2.5
+SENSORS: ['DEPTH_SENSOR']
+SIMULATOR_GPU_ID: 0
+TASK_CONFIG:
+  DATASET:
+    CONTENT_SCENES: ['*']
+    DATA_PATH: /srv/share/datasets/habitat-sim-datasets/pointnav/mp3d/v1/{split}/{split}.json.gz
+    SCENES_DIR: data/scene_datasets/basis_mp3d
+    SPLIT: val
+    TYPE: PointNav-v1
+  ENVIRONMENT:
+    ITERATOR_OPTIONS:
+      CYCLE: True
+      GROUP_BY_SCENE: True
+      MAX_SCENE_REPEAT_EPISODES: -1
+      MAX_SCENE_REPEAT_STEPS: 10000
+      NUM_EPISODE_SAMPLE: -1
+      SHUFFLE: True
+      STEP_REPETITION_RANGE: 0.2
+    MAX_EPISODE_SECONDS: 10000000
+    MAX_EPISODE_STEPS: 500
+  PYROBOT:
+    BASE_CONTROLLER: proportional
+    BASE_PLANNER: none
+    BUMP_SENSOR:
+      TYPE: PyRobotBumpSensor
+    DEPTH_SENSOR:
+      CENTER_CROP: False
+      HEIGHT: 480
+      MAX_DEPTH: 5.0
+      MIN_DEPTH: 0.0
+      NORMALIZE_DEPTH: True
+      TYPE: PyRobotDepthSensor
+      WIDTH: 640
+    LOCOBOT:
+      ACTIONS: ['BASE_ACTIONS', 'CAMERA_ACTIONS']
+      BASE_ACTIONS: ['go_to_relative', 'go_to_absolute']
+      CAMERA_ACTIONS: ['set_pan', 'set_tilt', 'set_pan_tilt']
+    RGB_SENSOR:
+      CENTER_CROP: False
+      HEIGHT: 480
+      TYPE: PyRobotRGBSensor
+      WIDTH: 640
+    ROBOT: locobot
+    ROBOTS: ['locobot']
+    SENSORS: ['RGB_SENSOR', 'DEPTH_SENSOR', 'BUMP_SENSOR']
+  SEED: 100
+  SIMULATOR:
+    ACTION_SPACE_CONFIG: v0
+    AGENTS: ['AGENT_0']
+    AGENT_0:
+      ANGULAR_ACCELERATION: 12.56
+      ANGULAR_FRICTION: 1.0
+      COEFFICIENT_OF_RESTITUTION: 0.0
+      HEIGHT: 1.5
+      IS_SET_START_STATE: False
+      LINEAR_ACCELERATION: 20.0
+      LINEAR_FRICTION: 0.5
+      MASS: 32.0
+      RADIUS: 0.1
+      SENSORS: ['RGB_SENSOR']
+      START_POSITION: [0, 0, 0]
+      START_ROTATION: [0, 0, 0, 1]
+    DEFAULT_AGENT_ID: 0
+    DEPTH_SENSOR:
+      HEIGHT: 256
+      HFOV: 90
+      MAX_DEPTH: 10.0
+      MIN_DEPTH: 0.0
+      NORMALIZE_DEPTH: True
+      ORIENTATION: [0.0, 0.0, 0.0]
+      POSITION: [0, 1.25, 0]
+      TYPE: HabitatSimDepthSensor
+      WIDTH: 256
+    FORWARD_STEP_SIZE: 0.25
+    HABITAT_SIM_V0:
+      ALLOW_SLIDING: True
+      ENABLE_PHYSICS: False
+      GPU_DEVICE_ID: 0
+      GPU_GPU: False
+      PHYSICS_CONFIG_FILE: ./data/default.physics_config.json
+    RGB_SENSOR:
+      HEIGHT: 256
+      HFOV: 90
+      ORIENTATION: [0.0, 0.0, 0.0]
+      POSITION: [0, 1.25, 0]
+      TYPE: HabitatSimRGBSensor
+      WIDTH: 256
+    SCENE: data/scene_datasets/habitat-test-scenes/van-gogh-room.glb
+    SEED: 100
+    SEMANTIC_SENSOR:
+      HEIGHT: 480
+      HFOV: 90
+      ORIENTATION: [0.0, 0.0, 0.0]
+      POSITION: [0, 1.25, 0]
+      TYPE: HabitatSimSemanticSensor
+      WIDTH: 640
+    TILT_ANGLE: 15
+    TURN_ANGLE: 10
+    TYPE: Sim-v0
+  TASK:
+    ACTIONS:
+      ANSWER:
+        TYPE: AnswerAction
+      LOOK_DOWN:
+        TYPE: LookDownAction
+      LOOK_UP:
+        TYPE: LookUpAction
+      MOVE_FORWARD:
+        TYPE: MoveForwardAction
+      STOP:
+        TYPE: StopAction
+      TELEPORT:
+        TYPE: TeleportAction
+      TURN_LEFT:
+        TYPE: TurnLeftAction
+      TURN_RIGHT:
+        TYPE: TurnRightAction
+    ANSWER_ACCURACY:
+      TYPE: AnswerAccuracy
+    COLLISIONS:
+      TYPE: Collisions
+    COMPASS_SENSOR:
+      TYPE: CompassSensor
+    CORRECT_ANSWER:
+      TYPE: CorrectAnswer
+    DISTANCE_TO_GOAL:
+      DISTANCE_TO: POINT
+      TYPE: DistanceToGoal
+    EPISODE_INFO:
+      TYPE: EpisodeInfo
+    GOAL_SENSOR_UUID: pointgoal_with_gps_compass
+    GPS_SENSOR:
+      DIMENSIONALITY: 2
+      TYPE: GPSSensor
+    HEADING_SENSOR:
+      TYPE: HeadingSensor
+    IMAGEGOAL_SENSOR:
+      TYPE: ImageGoalSensor
+    INSTRUCTION_SENSOR:
+      TYPE: InstructionSensor
+    INSTRUCTION_SENSOR_UUID: instruction
+    MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'COLLISIONS']
+    OBJECTGOAL_SENSOR:
+      GOAL_SPEC: TASK_CATEGORY_ID
+      GOAL_SPEC_MAX_VAL: 50
+      TYPE: ObjectGoalSensor
+    POINTGOAL_SENSOR:
+      DIMENSIONALITY: 2
+      GOAL_FORMAT: POLAR
+      TYPE: PointGoalSensor
+    POINTGOAL_WITH_GPS_COMPASS_SENSOR:
+      DIMENSIONALITY: 2
+      GOAL_FORMAT: POLAR
+      TYPE: PointGoalWithGPSCompassSensor
+    POSSIBLE_ACTIONS: ['STOP', 'MOVE_FORWARD', 'TURN_LEFT', 'TURN_RIGHT']
+    PROXIMITY_SENSOR:
+      MAX_DETECTION_RADIUS: 2.0
+      TYPE: ProximitySensor
+    QUESTION_SENSOR:
+      TYPE: QuestionSensor
+    SENSORS: ['POINTGOAL_WITH_GPS_COMPASS_SENSOR']
+    SOFT_SPL:
+      TYPE: SoftSPL
+    SPL:
+      TYPE: SPL
+    SUCCESS:
+      SUCCESS_DISTANCE: 0.2
+      TYPE: Success
+    SUCCESS_DISTANCE: 0.2
+    TOP_DOWN_MAP:
+      DRAW_BORDER: True
+      DRAW_GOAL_AABBS: True
+      DRAW_GOAL_POSITIONS: True
+      DRAW_SHORTEST_PATH: True
+      DRAW_SOURCE: True
+      DRAW_VIEW_POINTS: True
+      FOG_OF_WAR:
+        DRAW: True
+        FOV: 90
+        VISIBILITY_DIST: 5.0
+      MAP_PADDING: 3
+      MAP_RESOLUTION: 1024
+      MAX_EPISODE_STEPS: 1000
+      TYPE: TopDownMap
+    TYPE: Nav-v0
+TENSORBOARD_DIR: tb
+TEST_EPISODE_COUNT: 10000
+TORCH_GPU_ID: 0
+TRAINER_NAME: ddppo
+VIDEO_DIR: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic
+VIDEO_OPTION: ['disk']
+/srv/share/sameer/envs/sokoban/lib/python3.6/site-packages/tensorflow-1.13.1-py3.6-linux-x86_64.egg/tensorflow/python/framework/dtypes.py:526: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/srv/share/sameer/envs/sokoban/lib/python3.6/site-packages/tensorflow-1.13.1-py3.6-linux-x86_64.egg/tensorflow/python/framework/dtypes.py:527: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/srv/share/sameer/envs/sokoban/lib/python3.6/site-packages/tensorflow-1.13.1-py3.6-linux-x86_64.egg/tensorflow/python/framework/dtypes.py:528: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/srv/share/sameer/envs/sokoban/lib/python3.6/site-packages/tensorflow-1.13.1-py3.6-linux-x86_64.egg/tensorflow/python/framework/dtypes.py:529: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/srv/share/sameer/envs/sokoban/lib/python3.6/site-packages/tensorflow-1.13.1-py3.6-linux-x86_64.egg/tensorflow/python/framework/dtypes.py:530: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/srv/share/sameer/envs/sokoban/lib/python3.6/site-packages/tensorflow-1.13.1-py3.6-linux-x86_64.egg/tensorflow/python/framework/dtypes.py:535: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+2021-02-02 16:37:28,724 env config: BASE_TASK_CONFIG_PATH: configs/tasks/pointnav_mp3d.yaml
+CHECKPOINT_FOLDER: data/new_checkpoints
+CHECKPOINT_INTERVAL: 250
+CMD_TRAILING_OPTS: []
+ENV_NAME: NavRLEnv
+EVAL:
+  SPLIT: val
+  USE_CKPT_CONFIG: False
+EVAL_CKPT_PATH_DIR: data/new_checkpoints/gibson-2plus-se-resneXt101-lstm1024.pth
+FORCE_BLIND_POLICY: False
+LOG_FILE: train.log
+LOG_INTERVAL: 10
+NUM_PROCESSES: 1
+NUM_UPDATES: 10000
+ORBSLAM2:
+  ANGLE_TH: 0.2617993877991494
+  BETA: 100
+  CAMERA_HEIGHT: 1.25
+  DEPTH_DENORM: 10.0
+  DIST_REACHED_TH: 0.15
+  DIST_TO_STOP: 0.05
+  D_OBSTACLE_MAX: 4.0
+  D_OBSTACLE_MIN: 0.1
+  H_OBSTACLE_MAX: 1.25
+  H_OBSTACLE_MIN: 0.375
+  MAP_CELL_SIZE: 0.1
+  MAP_SIZE: 40
+  MIN_PTS_IN_OBSTACLE: 320.0
+  NEXT_WAYPOINT_TH: 0.5
+  NUM_ACTIONS: 3
+  PLANNER_MAX_STEPS: 500
+  PREPROCESS_MAP: True
+  SLAM_SETTINGS_PATH: habitat_baselines/slambased/data/mp3d3_small1k.yaml
+  SLAM_VOCAB_PATH: habitat_baselines/slambased/data/ORBvoc.txt
+PROFILING:
+  CAPTURE_START_STEP: -1
+  NUM_STEPS_TO_CAPTURE: -1
+RL:
+  DDPPO:
+    backbone: se_resneXt101
+    distrib_backend: GLOO
+    num_recurrent_layers: 2
+    pretrained: True
+    pretrained_encoder: True
+    pretrained_weights: data/ddppo-models/gibson-2plus-se-resneXt101-lstm1024.pth
+    reset_critic: True
+    rnn_type: LSTM
+    sync_frac: 0.6
+    train_encoder: False
+  POLICY:
+    OBS_TRANSFORMS:
+      CENTER_CROPPER:
+        HEIGHT: 256
+        WIDTH: 256
+      CUBE2EQ:
+        HEIGHT: 256
+        SENSOR_UUIDS: []
+        WIDTH: 512
+      CUBE2FISH:
+        FOV: 180
+        HEIGHT: 256
+        PARAMS: (0.2, 0.2, 0.2)
+        SENSOR_UUIDS: []
+        WIDTH: 256
+      ENABLED_TRANSFORMS: ()
+      EQ2CUBE:
+        HEIGHT: 256
+        SENSOR_UUIDS: []
+        WIDTH: 256
+      RESIZE_SHORTEST_EDGE:
+        SIZE: 256
+    name: PointNavResNetPolicy
+  PPO:
+    clip_param: 0.2
+    entropy_coef: 0.01
+    eps: 1e-05
+    gamma: 0.99
+    hidden_size: 1024
+    lr: 0.00025
+    max_grad_norm: 0.2
+    num_mini_batch: 2
+    num_steps: 128
+    ppo_epoch: 2
+    reward_window_size: 50
+    tau: 0.95
+    use_gae: True
+    use_linear_clip_decay: False
+    use_linear_lr_decay: False
+    use_normalized_advantage: False
+    value_loss_coef: 0.5
+  REWARD_MEASURE: distance_to_goal
+  SLACK_REWARD: -0.01
+  SUCCESS_MEASURE: spl
+  SUCCESS_REWARD: 2.5
+SENSORS: ['DEPTH_SENSOR']
+SIMULATOR_GPU_ID: 0
+TASK_CONFIG:
+  DATASET:
+    CONTENT_SCENES: ['*']
+    DATA_PATH: /srv/share/datasets/habitat-sim-datasets/pointnav/mp3d/v1/{split}/{split}.json.gz
+    SCENES_DIR: data/scene_datasets/basis_mp3d
+    SPLIT: val
+    TYPE: PointNav-v1
+  ENVIRONMENT:
+    ITERATOR_OPTIONS:
+      CYCLE: True
+      GROUP_BY_SCENE: True
+      MAX_SCENE_REPEAT_EPISODES: -1
+      MAX_SCENE_REPEAT_STEPS: 10000
+      NUM_EPISODE_SAMPLE: -1
+      SHUFFLE: True
+      STEP_REPETITION_RANGE: 0.2
+    MAX_EPISODE_SECONDS: 10000000
+    MAX_EPISODE_STEPS: 500
+  PYROBOT:
+    BASE_CONTROLLER: proportional
+    BASE_PLANNER: none
+    BUMP_SENSOR:
+      TYPE: PyRobotBumpSensor
+    DEPTH_SENSOR:
+      CENTER_CROP: False
+      HEIGHT: 480
+      MAX_DEPTH: 5.0
+      MIN_DEPTH: 0.0
+      NORMALIZE_DEPTH: True
+      TYPE: PyRobotDepthSensor
+      WIDTH: 640
+    LOCOBOT:
+      ACTIONS: ['BASE_ACTIONS', 'CAMERA_ACTIONS']
+      BASE_ACTIONS: ['go_to_relative', 'go_to_absolute']
+      CAMERA_ACTIONS: ['set_pan', 'set_tilt', 'set_pan_tilt']
+    RGB_SENSOR:
+      CENTER_CROP: False
+      HEIGHT: 480
+      TYPE: PyRobotRGBSensor
+      WIDTH: 640
+    ROBOT: locobot
+    ROBOTS: ['locobot']
+    SENSORS: ['RGB_SENSOR', 'DEPTH_SENSOR', 'BUMP_SENSOR']
+  SEED: 100
+  SIMULATOR:
+    ACTION_SPACE_CONFIG: v0
+    AGENTS: ['AGENT_0']
+    AGENT_0:
+      ANGULAR_ACCELERATION: 12.56
+      ANGULAR_FRICTION: 1.0
+      COEFFICIENT_OF_RESTITUTION: 0.0
+      HEIGHT: 1.5
+      IS_SET_START_STATE: False
+      LINEAR_ACCELERATION: 20.0
+      LINEAR_FRICTION: 0.5
+      MASS: 32.0
+      RADIUS: 0.1
+      SENSORS: ['RGB_SENSOR']
+      START_POSITION: [0, 0, 0]
+      START_ROTATION: [0, 0, 0, 1]
+    DEFAULT_AGENT_ID: 0
+    DEPTH_SENSOR:
+      HEIGHT: 256
+      HFOV: 90
+      MAX_DEPTH: 10.0
+      MIN_DEPTH: 0.0
+      NORMALIZE_DEPTH: True
+      ORIENTATION: [0.0, 0.0, 0.0]
+      POSITION: [0, 1.25, 0]
+      TYPE: HabitatSimDepthSensor
+      WIDTH: 256
+    FORWARD_STEP_SIZE: 0.25
+    HABITAT_SIM_V0:
+      ALLOW_SLIDING: True
+      ENABLE_PHYSICS: False
+      GPU_DEVICE_ID: 0
+      GPU_GPU: False
+      PHYSICS_CONFIG_FILE: ./data/default.physics_config.json
+    RGB_SENSOR:
+      HEIGHT: 256
+      HFOV: 90
+      ORIENTATION: [0.0, 0.0, 0.0]
+      POSITION: [0, 1.25, 0]
+      TYPE: HabitatSimRGBSensor
+      WIDTH: 256
+    SCENE: data/scene_datasets/habitat-test-scenes/van-gogh-room.glb
+    SEED: 100
+    SEMANTIC_SENSOR:
+      HEIGHT: 480
+      HFOV: 90
+      ORIENTATION: [0.0, 0.0, 0.0]
+      POSITION: [0, 1.25, 0]
+      TYPE: HabitatSimSemanticSensor
+      WIDTH: 640
+    TILT_ANGLE: 15
+    TURN_ANGLE: 10
+    TYPE: Sim-v0
+  TASK:
+    ACTIONS:
+      ANSWER:
+        TYPE: AnswerAction
+      LOOK_DOWN:
+        TYPE: LookDownAction
+      LOOK_UP:
+        TYPE: LookUpAction
+      MOVE_FORWARD:
+        TYPE: MoveForwardAction
+      STOP:
+        TYPE: StopAction
+      TELEPORT:
+        TYPE: TeleportAction
+      TURN_LEFT:
+        TYPE: TurnLeftAction
+      TURN_RIGHT:
+        TYPE: TurnRightAction
+    ANSWER_ACCURACY:
+      TYPE: AnswerAccuracy
+    COLLISIONS:
+      TYPE: Collisions
+    COMPASS_SENSOR:
+      TYPE: CompassSensor
+    CORRECT_ANSWER:
+      TYPE: CorrectAnswer
+    DISTANCE_TO_GOAL:
+      DISTANCE_TO: POINT
+      TYPE: DistanceToGoal
+    EPISODE_INFO:
+      TYPE: EpisodeInfo
+    GOAL_SENSOR_UUID: pointgoal_with_gps_compass
+    GPS_SENSOR:
+      DIMENSIONALITY: 2
+      TYPE: GPSSensor
+    HEADING_SENSOR:
+      TYPE: HeadingSensor
+    IMAGEGOAL_SENSOR:
+      TYPE: ImageGoalSensor
+    INSTRUCTION_SENSOR:
+      TYPE: InstructionSensor
+    INSTRUCTION_SENSOR_UUID: instruction
+    MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'COLLISIONS', 'TOP_DOWN_MAP', 'COLLISIONS']
+    OBJECTGOAL_SENSOR:
+      GOAL_SPEC: TASK_CATEGORY_ID
+      GOAL_SPEC_MAX_VAL: 50
+      TYPE: ObjectGoalSensor
+    POINTGOAL_SENSOR:
+      DIMENSIONALITY: 2
+      GOAL_FORMAT: POLAR
+      TYPE: PointGoalSensor
+    POINTGOAL_WITH_GPS_COMPASS_SENSOR:
+      DIMENSIONALITY: 2
+      GOAL_FORMAT: POLAR
+      TYPE: PointGoalWithGPSCompassSensor
+    POSSIBLE_ACTIONS: ['STOP', 'MOVE_FORWARD', 'TURN_LEFT', 'TURN_RIGHT']
+    PROXIMITY_SENSOR:
+      MAX_DETECTION_RADIUS: 2.0
+      TYPE: ProximitySensor
+    QUESTION_SENSOR:
+      TYPE: QuestionSensor
+    SENSORS: ['POINTGOAL_WITH_GPS_COMPASS_SENSOR']
+    SOFT_SPL:
+      TYPE: SoftSPL
+    SPL:
+      TYPE: SPL
+    SUCCESS:
+      SUCCESS_DISTANCE: 0.2
+      TYPE: Success
+    SUCCESS_DISTANCE: 0.2
+    TOP_DOWN_MAP:
+      DRAW_BORDER: True
+      DRAW_GOAL_AABBS: True
+      DRAW_GOAL_POSITIONS: True
+      DRAW_SHORTEST_PATH: True
+      DRAW_SOURCE: True
+      DRAW_VIEW_POINTS: True
+      FOG_OF_WAR:
+        DRAW: True
+        FOV: 90
+        VISIBILITY_DIST: 5.0
+      MAP_PADDING: 3
+      MAP_RESOLUTION: 1024
+      MAX_EPISODE_STEPS: 1000
+      TYPE: TopDownMap
+    TYPE: Nav-v0
+TENSORBOARD_DIR: tb
+TEST_EPISODE_COUNT: 10000
+TORCH_GPU_ID: 0
+TRAINER_NAME: ddppo
+VIDEO_DIR: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic
+VIDEO_OPTION: ['disk']
+2021-02-02 16:37:28,725 Initializing dataset PointNav-v1
+2021-02-02 16:37:30,824 Initializing dataset PointNav-v1
+2021-02-02 16:37:30,834 initializing sim Sim-v0
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+I0202 16:37:30.835556 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : default changed to proposed JSON configuration filename : default.scene_dataset_config.json
+I0202 16:37:30.843866 24028 AttributesManagerBase.h:283] AttributesManager<T>::createFromJsonOrDefaultInternal  (Dataset) : Proposing JSON name : default.scene_dataset_config.json from original name : default | This file  does not exist.
+I0202 16:37:30.844053 24028 AssetAttributesManager.cpp:117] Asset attributes (capsule3DSolid : capsule3DSolid_hemiRings_4_cylRings_1_segments_12_halfLen_0.75_useTexCoords_false_useTangents_false) created and registered.
+I0202 16:37:30.844167 24028 AssetAttributesManager.cpp:117] Asset attributes (capsule3DWireframe : capsule3DWireframe_hemiRings_8_cylRings_1_segments_16_halfLen_1) created and registered.
+I0202 16:37:30.844274 24028 AssetAttributesManager.cpp:117] Asset attributes (coneSolid : coneSolid_segments_12_halfLen_1.25_rings_1_useTexCoords_false_useTangents_false_capEnd_true) created and registered.
+I0202 16:37:30.844348 24028 AssetAttributesManager.cpp:117] Asset attributes (coneWireframe : coneWireframe_segments_32_halfLen_1.25) created and registered.
+I0202 16:37:30.844415 24028 AssetAttributesManager.cpp:117] Asset attributes (cubeSolid : cubeSolid) created and registered.
+I0202 16:37:30.844473 24028 AssetAttributesManager.cpp:117] Asset attributes (cubeWireframe : cubeWireframe) created and registered.
+I0202 16:37:30.844599 24028 AssetAttributesManager.cpp:117] Asset attributes (cylinderSolid : cylinderSolid_rings_1_segments_12_halfLen_1_useTexCoords_false_useTangents_false_capEnds_true) created and registered.
+I0202 16:37:30.844686 24028 AssetAttributesManager.cpp:117] Asset attributes (cylinderWireframe : cylinderWireframe_rings_1_segments_32_halfLen_1) created and registered.
+I0202 16:37:30.844746 24028 AssetAttributesManager.cpp:117] Asset attributes (icosphereSolid : icosphereSolid_subdivs_1) created and registered.
+I0202 16:37:30.844808 24028 AssetAttributesManager.cpp:117] Asset attributes (icosphereWireframe : icosphereWireframe_subdivs_1) created and registered.
+I0202 16:37:30.844882 24028 AssetAttributesManager.cpp:117] Asset attributes (uvSphereSolid : uvSphereSolid_rings_8_segments_16_useTexCoords_false_useTangents_false) created and registered.
+I0202 16:37:30.844951 24028 AssetAttributesManager.cpp:117] Asset attributes (uvSphereWireframe : uvSphereWireframe_rings_16_segments_32) created and registered.
+I0202 16:37:30.845005 24028 AssetAttributesManager.cpp:105] AssetAttributesManager::buildCtorFuncPtrMaps : Built default primitive asset templates : 12
+I0202 16:37:30.846431 24028 SceneDatasetAttributesManager.cpp:23] File (default) not found, so new default dataset attributes created and registered.
+I0202 16:37:30.846451 24028 MetadataMediator.cpp:47] MetadataMediator::createDataset : Dataset default successfully created.
+I0202 16:37:30.875026 24028 AttributesManagerBase.h:283] AttributesManager<T>::createFromJsonOrDefaultInternal  (Physics Manager) : Proposing JSON name : ./data/default.physics_config.json from original name : ./data/default.physics_config.json | This file  does not exist.
+I0202 16:37:30.875241 24028 PhysicsAttributesManager.cpp:27] File (./data/default.physics_config.json) not found, so new default physics manager attributes created and registered.
+I0202 16:37:30.875311 24028 AbstractObjectAttributesManagerBase.h:175] AbstractObjectAttributesManager<T>::createObject  (Stage) : Making attributes with handle : data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.glb
+I0202 16:37:30.875423 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.glb changed to proposed JSON configuration filename : data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.stage_config.json
+I0202 16:37:30.876554 24028 AttributesManagerBase.h:283] AttributesManager<T>::createFromJsonOrDefaultInternal  (Stage) : Proposing JSON name : data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.stage_config.json from original name : data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.glb | This file  does not exist.
+I0202 16:37:30.877240 24028 AbstractObjectAttributesManagerBase.h:181] AbstractObjectAttributesManager<T>::createObject  (Stage) : Done making attributes with handle : data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.glb
+I0202 16:37:30.877310 24028 AbstractObjectAttributesManagerBase.h:188] File (data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.glb) exists but is not a recognized config filename extension, so new default Stage attributes created and registered.
+I0202 16:37:30.877411 24028 Simulator.cpp:156] Loading navmesh from data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.navmesh
+I0202 16:37:30.879570 24028 Simulator.cpp:158] Loaded.
+I0202 16:37:30.879621 24028 SceneGraph.h:93] Created DrawableGroup: 
+Renderer: GeForce RTX 2080 Ti/PCIe/SSE2 by NVIDIA Corporation
+OpenGL version: 4.6.0 NVIDIA 440.64.00
+Using optional features:
+    GL_ARB_ES2_compatibility
+    GL_ARB_direct_state_access
+    GL_ARB_get_texture_sub_image
+    GL_ARB_invalidate_subdata
+    GL_ARB_multi_bind
+    GL_ARB_robustness
+    GL_ARB_separate_shader_objects
+    GL_ARB_texture_filter_anisotropic
+    GL_ARB_texture_storage
+    GL_ARB_texture_storage_multisample
+    GL_ARB_vertex_array_object
+    GL_KHR_debug
+Using driver workarounds:
+    no-forward-compatible-core-context
+    nv-egl-incorrect-gl11-function-pointers
+    no-layout-qualifiers-on-old-glsl
+    nv-zero-context-profile-mask
+    nv-implementation-color-read-format-dsa-broken
+    nv-cubemap-inconsistent-compressed-image-size
+    nv-cubemap-broken-full-compressed-image-query
+    nv-compressed-block-size-in-bits
+I0202 16:37:31.005419 24028 ResourceManager.cpp:234] ResourceManager::loadStage : Not loading semantic mesh
+I0202 16:37:31.005476 24028 ResourceManager.cpp:262] ResourceManager::loadStage : start load render asset data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.glb.
+I0202 16:37:31.005488 24028 ResourceManager.cpp:569] ResourceManager::loadStageInternal : Attempting to load stage data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.glb 
+I0202 16:37:31.005571 24028 ResourceManager.cpp:1119] Importing Basis files as BC7 for TbHJrupSAjP.glb
+W0202 16:37:33.299584 24028 Simulator.cpp:248] :
+---
+ The active scene does not contain semantic annotations. 
+---
+I0202 16:37:33.521755 24028 simulator.py:213] Loaded navmesh data/scene_datasets/basis_mp3d/mp3d/TbHJrupSAjP/TbHJrupSAjP.navmesh
+2021-02-02 16:37:33,524 Initializing task Nav-v0
+2021-02-02 16:37:53,226 Config specified 10000 eval episodes, dataset only has {total_num_eps}.
+2021-02-02 16:37:53,227 Evaluating with 495 instead.
+  0%|          | 0/495 [00:00<?, ?it/s]I0202 16:37:54.756920 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:37:54.774070 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:37:54.774091 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:37:54.774785 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:37:54.800611 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:37:54.801576 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:37:54.812320 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:37:54.812614 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:37:54.812654 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:37:54.812664 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:37:54.813143 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:37:54.813341 24028 ResourceManager.cpp:1119] Importing Basis files as BC7 for chair.glb
+I0202 16:37:55.078321 24028 PathFinder.cpp:382] Building navmesh with 311x316 cells
+I0202 16:37:55.351224 24028 PathFinder.cpp:650] Created navmesh with 1032 vertices 520 polygons
+I0202 16:37:55.351436 24028 Simulator.cpp:710] reconstruct navmesh successful
+/coc/pskynet1/sameer/xai-pointnav/habitat-lab/habitat/utils/visualizations/xai_utils.py:44: RuntimeWarning: invalid value encountered in true_divide
+  cam3 = cam2/(np.max(cam2))
+I0202 16:37:56.915148 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:37:56.915472 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:37:56.915479 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:37:56.915684 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:37:56.915866 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:37:56.916007 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:37:56.916148 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:37:56.916170 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:37:56.916179 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:37:56.916182 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:37:56.916323 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:37:56.932214 24028 PathFinder.cpp:382] Building navmesh with 311x316 cells
+I0202 16:37:57.206507 24028 PathFinder.cpp:650] Created navmesh with 1037 vertices 523 polygons
+I0202 16:37:57.206707 24028 Simulator.cpp:710] reconstruct navmesh successful
+  0%|          | 1/495 [00:08<1:09:48,  8.48s/it]2021-02-02 16:38:01,808 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=24-ckpt=0-distance_to_goal=11.47-success=0.00-spl=0.00-softspl=0.00-collisions.count=1.00.mp4
+
+  0%|          | 0/29 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+  3%|3         | 1/29 [00:00<00:15,  1.86it/s][A[swscaler @ 0x5d0c200] Warning: data is not aligned! This can lead to a speed loss
+100%|##########| 29/29 [00:00<00:00, 47.32it/s]
+I0202 16:38:04.187196 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:04.187412 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:04.187434 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:04.187667 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:04.187827 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:04.187994 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:04.188156 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:04.188179 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:04.188186 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:04.188189 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:04.188329 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:04.209000 24028 PathFinder.cpp:382] Building navmesh with 311x316 cells
+I0202 16:38:04.485510 24028 PathFinder.cpp:650] Created navmesh with 1046 vertices 529 polygons
+I0202 16:38:04.485711 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:05.978462 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:05.978786 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:05.978796 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:05.979001 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:05.979182 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:05.979324 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:05.979432 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:05.979454 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:05.979462 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:05.979465 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:05.979607 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:05.994576 24028 PathFinder.cpp:382] Building navmesh with 311x316 cells
+I0202 16:38:06.264046 24028 PathFinder.cpp:650] Created navmesh with 1046 vertices 529 polygons
+I0202 16:38:06.264215 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:07.757846 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:07.758213 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:07.758221 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:07.758425 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:07.758576 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:07.758721 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:07.758829 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:07.758852 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:07.758862 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:07.758863 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:07.759001 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:07.773828 24028 PathFinder.cpp:382] Building navmesh with 311x316 cells
+I0202 16:38:08.052142 24028 PathFinder.cpp:650] Created navmesh with 1046 vertices 529 polygons
+I0202 16:38:08.052318 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:09.543823 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:09.544031 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:09.544051 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:09.544224 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:09.544404 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:09.544520 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:09.544661 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:09.544684 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:09.544693 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:09.544695 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:09.544849 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:09.559438 24028 PathFinder.cpp:382] Building navmesh with 311x316 cells
+I0202 16:38:09.831985 24028 PathFinder.cpp:650] Created navmesh with 1046 vertices 529 polygons
+I0202 16:38:09.832160 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:11.328166 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:11.328421 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:11.328444 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:11.328616 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:11.328799 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:11.328912 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:11.329052 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:11.329073 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:11.329082 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:11.329084 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:11.329227 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:11.344025 24028 PathFinder.cpp:382] Building navmesh with 311x316 cells
+I0202 16:38:11.626124 24028 PathFinder.cpp:650] Created navmesh with 1050 vertices 528 polygons
+I0202 16:38:11.626308 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:13.135131 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:13.135409 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:13.135417 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:13.135643 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:13.135805 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:13.135953 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:13.136063 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:13.136087 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:13.136096 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:13.136098 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:13.136234 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:13.150996 24028 PathFinder.cpp:382] Building navmesh with 312x316 cells
+I0202 16:38:13.421527 24028 PathFinder.cpp:650] Created navmesh with 1089 vertices 541 polygons
+I0202 16:38:13.421702 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:14.923816 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:14.924175 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:14.924185 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:14.924379 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:14.924559 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:14.924705 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:14.924813 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:14.924836 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:14.924844 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:14.924847 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:14.924994 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:14.939802 24028 PathFinder.cpp:382] Building navmesh with 336x316 cells
+I0202 16:38:15.214102 24028 PathFinder.cpp:650] Created navmesh with 1038 vertices 540 polygons
+I0202 16:38:15.214275 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:16.715104 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:16.715378 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:16.715386 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:16.715581 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:16.715767 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:16.715880 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:16.716023 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:16.716048 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:16.716055 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:16.716058 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:16.716197 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:16.731150 24028 PathFinder.cpp:382] Building navmesh with 336x353 cells
+I0202 16:38:17.006379 24028 PathFinder.cpp:650] Created navmesh with 1038 vertices 540 polygons
+I0202 16:38:17.006554 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:18.505605 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:18.505851 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:18.505857 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:18.506045 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:18.506232 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:18.506348 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:18.506490 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:18.506513 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:18.506521 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:18.506523 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:18.506664 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:18.521679 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:18.803833 24028 PathFinder.cpp:650] Created navmesh with 1039 vertices 540 polygons
+I0202 16:38:18.804034 24028 Simulator.cpp:710] reconstruct navmesh successful
+  0%|          | 2/495 [00:28<2:07:06, 15.47s/it]2021-02-02 16:38:22,110 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=32-ckpt=0-distance_to_goal=32.83-success=0.00-spl=0.00-softspl=0.00-collisions.count=12.00.mp4
+
+  0%|          | 0/90 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+  1%|1         | 1/90 [00:00<00:09,  9.28it/s][A[swscaler @ 0x7403200] Warning: data is not aligned! This can lead to a speed loss
+
+ 48%|####7     | 43/90 [00:00<00:00, 220.41it/s][A
+ 72%|#######2  | 65/90 [00:00<00:00, 131.71it/s][A
+ 90%|######### | 81/90 [00:00<00:00, 112.20it/s][A100%|##########| 90/90 [00:00<00:00, 114.24it/s]
+I0202 16:38:24.802146 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:24.802436 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:24.802443 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:24.802601 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:24.802781 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:24.802892 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:24.803042 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:24.803066 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:24.803073 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:24.803076 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:24.803212 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:24.818477 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:25.096009 24028 PathFinder.cpp:650] Created navmesh with 1043 vertices 542 polygons
+I0202 16:38:25.096185 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:26.629379 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:26.629681 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:26.629689 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:26.629896 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:26.630046 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:26.630192 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:26.630301 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:26.630323 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:26.630332 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:26.630334 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:26.630472 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:26.645820 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:26.929179 24028 PathFinder.cpp:650] Created navmesh with 1042 vertices 540 polygons
+I0202 16:38:26.929369 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:28.467092 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:28.467283 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:28.467288 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:28.467460 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:28.467638 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:28.467752 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:28.467900 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:28.467921 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:28.467931 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:28.467932 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:28.468070 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:28.483016 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:28.762123 24028 PathFinder.cpp:650] Created navmesh with 1042 vertices 540 polygons
+I0202 16:38:28.762311 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:30.279381 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:30.279532 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:30.279538 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:30.279760 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:30.279940 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:30.280053 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:30.280191 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:30.280212 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:30.280220 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:30.280223 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:30.280362 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:30.295559 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:30.574286 24028 PathFinder.cpp:650] Created navmesh with 1042 vertices 540 polygons
+I0202 16:38:30.574455 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:32.113780 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:32.114071 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:32.114079 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:32.114248 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:32.114428 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:32.114540 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:32.114686 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:32.114708 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:32.114717 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:32.114719 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:32.114858 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:32.129683 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:32.414604 24028 PathFinder.cpp:650] Created navmesh with 1044 vertices 543 polygons
+I0202 16:38:32.414814 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:33.940922 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:33.941174 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:33.941182 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:33.941426 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:33.941586 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:33.941741 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:33.941861 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:33.941884 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:33.941891 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:33.941895 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:33.942036 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:33.963917 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:34.242586 24028 PathFinder.cpp:650] Created navmesh with 1049 vertices 543 polygons
+I0202 16:38:34.242799 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:35.753305 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:35.753574 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:35.753582 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:35.753759 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:35.753945 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:35.754061 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:35.754210 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:35.754231 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:35.754240 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:35.754242 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:35.754384 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:35.770305 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:36.051199 24028 PathFinder.cpp:650] Created navmesh with 1049 vertices 543 polygons
+I0202 16:38:36.051400 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:37.627815 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:37.628135 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:37.628159 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:37.628326 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:37.628506 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:37.628618 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:37.628758 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:37.628778 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:37.628787 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:37.628789 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:37.628928 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:37.644253 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:37.926098 24028 PathFinder.cpp:650] Created navmesh with 1049 vertices 543 polygons
+I0202 16:38:37.926280 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:39.459470 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:39.459818 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:39.459827 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:39.460031 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:39.460208 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:39.460352 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:39.460501 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:39.460523 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:39.460532 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:39.460536 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:39.460675 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:39.475741 24028 PathFinder.cpp:382] Building navmesh with 387x353 cells
+I0202 16:38:39.759330 24028 PathFinder.cpp:650] Created navmesh with 1049 vertices 543 polygons
+I0202 16:38:39.759523 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:41.279645 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:41.279932 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:41.279939 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:41.280139 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:41.280318 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:41.280429 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:41.280566 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:41.280588 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:41.280597 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:41.280599 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:41.280742 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:41.296043 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:38:41.586249 24028 PathFinder.cpp:650] Created navmesh with 1049 vertices 543 polygons
+I0202 16:38:41.586366 24028 Simulator.cpp:710] reconstruct navmesh successful
+  1%|          | 3/495 [00:51<2:35:29, 18.96s/it]2021-02-02 16:38:45,228 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=16-ckpt=0-distance_to_goal=23.63-success=0.00-spl=0.00-softspl=0.00-collisions.count=8.00.mp4
+
+  0%|          | 0/102 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+[swscaler @ 0x6dd9200] Warning: data is not aligned! This can lead to a speed loss
+
+  2%|1         | 2/102 [00:00<00:06, 16.59it/s][A
+ 42%|####2     | 43/102 [00:00<00:00, 226.96it/s][A
+ 67%|######6   | 68/102 [00:00<00:00, 134.27it/s][A
+ 84%|########4 | 86/102 [00:00<00:00, 112.41it/s][A
+ 98%|#########8| 100/102 [00:00<00:00, 101.47it/s][A100%|##########| 102/102 [00:00<00:00, 111.00it/s]
+I0202 16:38:48.097268 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:48.097514 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:48.097522 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:48.097698 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:48.097883 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:48.097997 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:48.098137 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:48.098160 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:48.098167 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:48.098170 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:48.098307 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:48.113651 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:38:48.396226 24028 PathFinder.cpp:650] Created navmesh with 1049 vertices 543 polygons
+I0202 16:38:48.396430 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:49.917562 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:49.917855 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:49.917863 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:49.918035 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:49.918215 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:49.918329 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:49.918467 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:49.918489 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:49.918498 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:49.918500 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:49.918638 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:49.933813 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:38:50.211444 24028 PathFinder.cpp:650] Created navmesh with 1051 vertices 542 polygons
+I0202 16:38:50.211628 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:51.754515 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:51.754842 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:51.754853 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:51.755054 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:51.755235 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:51.755383 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:51.755525 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:51.755550 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:51.755560 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:51.755563 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:51.755707 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:51.771234 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:38:52.057703 24028 PathFinder.cpp:650] Created navmesh with 1051 vertices 542 polygons
+I0202 16:38:52.057824 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:38:53.584636 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:38:53.584936 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:38:53.584944 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:53.585144 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:38:53.585320 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:38:53.585460 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:38:53.585569 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:38:53.585592 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:38:53.585599 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:38:53.585602 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:38:53.585741 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:38:53.600991 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:38:53.885773 24028 PathFinder.cpp:650] Created navmesh with 1051 vertices 542 polygons
+I0202 16:38:53.885977 24028 Simulator.cpp:710] reconstruct navmesh successful
+  1%|          | 4/495 [01:05<2:18:16, 16.90s/it]2021-02-02 16:38:58,958 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=36-ckpt=0-distance_to_goal=0.77-success=0.00-spl=0.00-softspl=0.87-collisions.count=5.00.mp4
+
+  0%|          | 0/43 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+  2%|2         | 1/43 [00:00<00:04,  9.33it/s][A[swscaler @ 0x5752200] Warning: data is not aligned! This can lead to a speed loss
+
+ 72%|#######2  | 31/43 [00:00<00:00, 174.41it/s][A100%|##########| 43/43 [00:00<00:00, 159.59it/s]
+I0202 16:39:01.168186 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:01.168427 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:01.168433 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:01.168614 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:01.168797 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:01.168912 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:01.169051 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:01.169075 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:01.169082 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:01.169085 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:01.169224 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:01.184506 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:39:01.467806 24028 PathFinder.cpp:650] Created navmesh with 1051 vertices 542 polygons
+I0202 16:39:01.467970 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:03.060452 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:03.060679 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:03.060688 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:03.060894 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:03.061069 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:03.061213 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:03.061319 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:03.061342 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:03.061349 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:03.061352 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:03.061503 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:03.077018 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:39:03.364308 24028 PathFinder.cpp:650] Created navmesh with 1056 vertices 546 polygons
+I0202 16:39:03.364504 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:04.960459 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:04.960620 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:04.960626 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:04.960805 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:04.961010 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:04.961124 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:04.961262 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:04.961283 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:04.961292 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:04.961294 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:04.961434 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:04.976841 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:39:05.260174 24028 PathFinder.cpp:650] Created navmesh with 1059 vertices 548 polygons
+I0202 16:39:05.260331 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:06.848811 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:06.849076 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:06.849084 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:06.849252 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:06.849436 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:06.849548 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:06.849686 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:06.849709 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:06.849717 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:06.849720 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:06.849872 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:06.865332 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:39:07.151111 24028 PathFinder.cpp:650] Created navmesh with 1059 vertices 549 polygons
+I0202 16:39:07.151281 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:08.735667 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:08.735965 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:08.735972 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:08.736166 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:08.736347 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:08.736460 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:08.736601 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:08.736624 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:08.736631 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:08.736634 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:08.736773 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:08.752382 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:39:09.035851 24028 PathFinder.cpp:650] Created navmesh with 1059 vertices 549 polygons
+I0202 16:39:09.036022 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:10.615729 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:10.615936 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:10.615942 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:10.616119 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:10.616297 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:10.616410 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:10.616549 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:10.616572 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:10.616580 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:10.616582 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:10.616730 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:10.632421 24028 PathFinder.cpp:382] Building navmesh with 387x377 cells
+I0202 16:39:10.915936 24028 PathFinder.cpp:650] Created navmesh with 1060 vertices 550 polygons
+I0202 16:39:10.916023 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:12.509254 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:12.509523 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:12.509532 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:12.509703 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:12.509898 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:12.510015 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:12.510157 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:12.510180 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:12.510188 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:12.510191 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:12.510331 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:12.526033 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:12.813558 24028 PathFinder.cpp:650] Created navmesh with 1060 vertices 550 polygons
+I0202 16:39:12.813730 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:14.415169 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:14.415405 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:14.415413 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:14.415594 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:14.415773 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:14.415887 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:14.416026 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:14.416049 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:14.416056 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:14.416059 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:14.416209 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:14.431875 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:14.714159 24028 PathFinder.cpp:650] Created navmesh with 1055 vertices 548 polygons
+I0202 16:39:14.714344 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:16.311019 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:16.311417 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:16.311425 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:16.311597 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:16.311779 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:16.311889 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:16.312027 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:16.312048 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:16.312057 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:16.312059 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:16.312199 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:16.327697 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:16.613034 24028 PathFinder.cpp:650] Created navmesh with 1055 vertices 548 polygons
+I0202 16:39:16.613205 24028 Simulator.cpp:710] reconstruct navmesh successful
+  1%|1         | 5/495 [01:28<2:35:00, 18.98s/it]2021-02-02 16:39:21,635 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=4-ckpt=0-distance_to_goal=9.50-success=0.00-spl=0.00-softspl=0.05-collisions.count=23.00.mp4
+
+  0%|          | 0/92 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+  1%|1         | 1/92 [00:00<00:11,  8.09it/s][A[swscaler @ 0x5d50200] Warning: data is not aligned! This can lead to a speed loss
+
+ 47%|####6     | 43/92 [00:00<00:00, 198.28it/s][A
+ 68%|######8   | 63/92 [00:00<00:00, 122.48it/s][A
+ 85%|########4 | 78/92 [00:00<00:00, 109.20it/s][A
+ 99%|#########8| 91/92 [00:00<00:00, 99.41it/s] [A100%|##########| 92/92 [00:00<00:00, 107.84it/s]
+I0202 16:39:24.475178 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:24.475355 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:24.475363 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:24.475526 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:24.475701 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:24.475814 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:24.475955 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:24.475977 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:24.475986 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:24.475988 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:24.476126 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:24.492169 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:24.775195 24028 PathFinder.cpp:650] Created navmesh with 1056 vertices 547 polygons
+I0202 16:39:24.775384 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:26.355219 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:26.355414 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:26.355420 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:26.355597 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:26.355775 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:26.355886 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:26.356025 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:26.356046 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:26.356055 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:26.356057 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:26.356197 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:26.371707 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:26.656450 24028 PathFinder.cpp:650] Created navmesh with 1060 vertices 549 polygons
+I0202 16:39:26.656646 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:28.261499 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:28.261775 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:28.261790 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:28.262008 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:28.262156 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:28.262297 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:28.262409 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:28.262431 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:28.262439 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:28.262441 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:28.262579 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:28.278420 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:28.565770 24028 PathFinder.cpp:650] Created navmesh with 1062 vertices 551 polygons
+I0202 16:39:28.565884 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:30.163826 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:30.163986 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:30.163992 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:30.164196 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:30.164374 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:30.164516 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:30.164626 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:30.164647 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:30.164656 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:30.164659 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:30.164798 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:30.180550 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:30.470935 24028 PathFinder.cpp:650] Created navmesh with 1066 vertices 555 polygons
+I0202 16:39:30.471042 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:32.118430 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:32.118655 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:32.118661 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:32.118901 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:32.119058 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:32.119213 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:32.119328 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:32.119350 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:32.119359 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:32.119361 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:32.119503 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:32.141886 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:32.428023 24028 PathFinder.cpp:650] Created navmesh with 1076 vertices 565 polygons
+I0202 16:39:32.428220 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:34.066313 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:34.066646 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:34.066654 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:34.066823 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:34.067003 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:34.067114 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:34.067251 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:34.067272 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:34.067281 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:34.067283 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:34.067425 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:34.083669 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:34.366370 24028 PathFinder.cpp:650] Created navmesh with 1076 vertices 565 polygons
+I0202 16:39:34.366544 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:36.004577 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:36.004906 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:36.004914 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:36.005116 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:36.005264 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:36.005407 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:36.005517 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:36.005537 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:36.005546 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:36.005548 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:36.005683 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:36.021708 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:36.309731 24028 PathFinder.cpp:650] Created navmesh with 1077 vertices 567 polygons
+I0202 16:39:36.309921 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:37.965859 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:37.966079 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:37.966087 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:37.966295 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:37.966471 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:37.966583 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:37.966719 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:37.966740 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:37.966748 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:37.966751 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:37.966888 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:37.982595 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:38.268568 24028 PathFinder.cpp:650] Created navmesh with 1081 vertices 569 polygons
+I0202 16:39:38.268740 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:39.915482 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:39.915740 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:39.915748 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:39.915966 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:39.916117 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:39.916262 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:39.916373 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:39.916394 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:39.916402 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:39.916405 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:39.916546 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:39.932685 24028 PathFinder.cpp:382] Building navmesh with 394x377 cells
+I0202 16:39:40.227574 24028 PathFinder.cpp:650] Created navmesh with 1083 vertices 570 polygons
+I0202 16:39:40.227756 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:41.886116 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:41.886406 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:41.886415 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:41.886581 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:41.886763 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:41.886878 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:41.887017 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:41.887040 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:41.887049 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:41.887051 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:41.887159 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:41.903180 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:39:42.190135 24028 PathFinder.cpp:650] Created navmesh with 1083 vertices 570 polygons
+I0202 16:39:42.190318 24028 Simulator.cpp:710] reconstruct navmesh successful
+  1%|1         | 6/495 [01:53<2:50:53, 20.97s/it]2021-02-02 16:39:46,463 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=10-ckpt=0-distance_to_goal=8.74-success=0.00-spl=0.00-softspl=0.06-collisions.count=28.00.mp4
+
+  0%|          | 0/105 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+  1%|          | 1/105 [00:00<00:12,  8.21it/s][A[swscaler @ 0x5c5d200] Warning: data is not aligned! This can lead to a speed loss
+
+ 41%|####      | 43/105 [00:00<00:00, 190.72it/s][A
+ 59%|#####9    | 62/105 [00:00<00:00, 122.60it/s][A
+ 72%|#######2  | 76/105 [00:00<00:00, 107.30it/s][A
+ 84%|########3 | 88/105 [00:00<00:00, 98.05it/s] [A
+ 94%|#########4| 99/105 [00:00<00:00, 91.02it/s][A100%|##########| 105/105 [00:01<00:00, 99.77it/s]
+I0202 16:39:49.561017 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:49.561244 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:49.561254 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:49.561468 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:49.561646 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:49.561789 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:49.561913 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:49.561934 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:49.561944 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:49.561945 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:49.562085 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:49.578213 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:39:49.864385 24028 PathFinder.cpp:650] Created navmesh with 1083 vertices 570 polygons
+I0202 16:39:49.864583 24028 Simulator.cpp:710] reconstruct navmesh successful
+  1%|1         | 7/495 [02:00<2:12:59, 16.35s/it]2021-02-02 16:39:53,309 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=37-ckpt=0-distance_to_goal=0.12-success=1.00-spl=0.98-softspl=0.89-collisions.count=0.00.mp4
+
+  0%|          | 0/10 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+ 10%|#         | 1/10 [00:00<00:01,  8.64it/s][A[swscaler @ 0x5f5d200] Warning: data is not aligned! This can lead to a speed loss
+100%|##########| 10/10 [00:00<00:00, 69.66it/s]
+I0202 16:39:55.071437 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:55.071686 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:55.071693 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:55.071910 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:55.072059 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:55.072204 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:55.072315 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:55.072338 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:55.072347 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:55.072350 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:55.072490 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:55.088851 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:39:55.385649 24028 PathFinder.cpp:650] Created navmesh with 1090 vertices 574 polygons
+I0202 16:39:55.385848 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:56.971104 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:56.971401 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:56.971410 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:56.971603 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:56.971776 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:56.971916 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:56.972052 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:56.972074 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:56.972082 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:56.972085 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:56.972245 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:56.988596 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:39:57.272644 24028 PathFinder.cpp:650] Created navmesh with 1090 vertices 574 polygons
+I0202 16:39:57.272807 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:39:58.870039 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:39:58.870373 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:39:58.870380 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:58.870585 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:39:58.870733 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:39:58.870872 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:39:58.870981 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:39:58.871004 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:39:58.871012 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:39:58.871016 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:39:58.871151 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:39:58.887161 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:39:59.179893 24028 PathFinder.cpp:650] Created navmesh with 1089 vertices 575 polygons
+I0202 16:39:59.180095 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:00.825620 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:00.825904 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:00.825913 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:00.826107 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:00.826283 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:00.826422 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:00.826560 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:00.826581 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:00.826589 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:00.826591 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:00.826728 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:00.843266 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:01.139119 24028 PathFinder.cpp:650] Created navmesh with 1089 vertices 575 polygons
+I0202 16:40:01.139298 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:02.762699 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:02.762971 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:02.762980 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:02.763187 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:02.763362 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:02.763504 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:02.763645 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:02.763669 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:02.763677 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:02.763679 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:02.763819 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:02.779969 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:03.069231 24028 PathFinder.cpp:650] Created navmesh with 1090 vertices 574 polygons
+I0202 16:40:03.069412 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:04.694031 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:04.694411 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:04.694417 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:04.694614 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:04.694793 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:04.694936 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:04.695072 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:04.695094 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:04.695103 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:04.695106 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:04.695242 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:04.711760 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:05.005843 24028 PathFinder.cpp:650] Created navmesh with 1090 vertices 574 polygons
+I0202 16:40:05.006011 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:06.615991 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:06.616183 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:06.616189 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:06.616358 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:06.616544 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:06.616657 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:06.616794 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:06.616817 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:06.616825 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:06.616827 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:06.616964 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:06.633188 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:06.922963 24028 PathFinder.cpp:650] Created navmesh with 1088 vertices 573 polygons
+I0202 16:40:06.923082 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:08.562247 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:08.562527 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:08.562534 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:08.562752 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:08.562901 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:08.563048 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:08.563158 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:08.563179 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:08.563189 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:08.563190 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:08.563330 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:08.579671 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:08.869107 24028 PathFinder.cpp:650] Created navmesh with 1084 vertices 572 polygons
+I0202 16:40:08.869264 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:10.510485 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:10.510721 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:10.510730 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:10.510936 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:10.511119 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:10.511232 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:10.511368 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:10.511391 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:10.511399 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:10.511402 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:10.511541 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:10.528178 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:10.821898 24028 PathFinder.cpp:650] Created navmesh with 1086 vertices 571 polygons
+I0202 16:40:10.822065 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:12.458604 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:12.458766 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:12.458772 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:12.458978 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:12.459127 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:12.459270 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:12.459381 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:12.459403 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:12.459411 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:12.459414 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:12.459553 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:12.476202 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:12.770426 24028 PathFinder.cpp:650] Created navmesh with 1086 vertices 571 polygons
+I0202 16:40:12.770609 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:14.404832 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:14.405046 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:14.405053 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:14.405227 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:14.405439 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:14.405555 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:14.405694 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:14.405719 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:14.405727 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:14.405730 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:14.405876 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:14.422389 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:14.720683 24028 PathFinder.cpp:650] Created navmesh with 1088 vertices 570 polygons
+I0202 16:40:14.720878 24028 Simulator.cpp:710] reconstruct navmesh successful
+  2%|1         | 8/495 [02:26<2:39:54, 19.70s/it]2021-02-02 16:40:20,184 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=27-ckpt=0-distance_to_goal=0.92-success=0.00-spl=0.00-softspl=0.87-collisions.count=16.00.mp4
+
+  0%|          | 0/114 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+  1%|          | 1/114 [00:00<00:15,  7.17it/s][A[swscaler @ 0x724b200] Warning: data is not aligned! This can lead to a speed loss
+
+ 38%|###7      | 43/114 [00:00<00:00, 188.38it/s][A
+ 55%|#####5    | 63/114 [00:00<00:00, 126.78it/s][A
+ 68%|######8   | 78/114 [00:00<00:00, 104.76it/s][A
+ 79%|#######8  | 90/114 [00:00<00:00, 93.82it/s] [A
+ 89%|########8 | 101/114 [00:01<00:00, 88.21it/s][A
+ 97%|#########7| 111/114 [00:01<00:00, 84.63it/s][A100%|##########| 114/114 [00:01<00:00, 95.59it/s]
+I0202 16:40:23.421258 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:23.421490 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:23.421499 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:23.421707 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:23.421866 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:23.422013 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:23.422148 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:23.422170 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:23.422178 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:23.422181 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:23.422329 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:23.439143 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:23.736254 24028 PathFinder.cpp:650] Created navmesh with 1088 vertices 570 polygons
+I0202 16:40:23.736445 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:25.420491 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:25.420652 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:25.420658 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:25.420862 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:25.421025 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:25.421180 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:25.421289 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:25.421310 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:25.421319 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:25.421321 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:25.421458 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:25.437855 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:25.729537 24028 PathFinder.cpp:650] Created navmesh with 1088 vertices 570 polygons
+I0202 16:40:25.729732 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:27.428908 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:27.429124 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:27.429131 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:27.429332 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:27.429484 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:27.429656 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:27.429792 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:27.429819 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:27.429828 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:27.429831 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:27.429981 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:27.446696 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:27.744429 24028 PathFinder.cpp:650] Created navmesh with 1089 vertices 568 polygons
+I0202 16:40:27.744535 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:29.427580 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:29.427884 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:29.427892 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:29.428093 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:29.428273 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:29.428385 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:29.428522 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:29.428544 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:29.428553 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:29.428556 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:29.428694 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:29.445344 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:29.745255 24028 PathFinder.cpp:650] Created navmesh with 1089 vertices 569 polygons
+I0202 16:40:29.745452 24028 Simulator.cpp:710] reconstruct navmesh successful
+  2%|1         | 9/495 [02:40<2:24:31, 17.84s/it]2021-02-02 16:40:33,935 Video created: /srv/share/sameer/xai-pointnav/saved_data/depth_mp3d_collisions_periodic/episode=28-ckpt=0-distance_to_goal=0.87-success=0.00-spl=0.00-softspl=0.89-collisions.count=2.00.mp4
+
+  0%|          | 0/44 [00:00<?, ?it/s][AIMAGEIO FFMPEG_WRITER WARNING: input image is not divisible by macro_block_size=16, resizing from (769, 256) to (784, 256) to ensure video compatibility with most codecs and players. To prevent resizing, make your input image divisible by the macro_block_size or set the macro_block_size to 1 (risking incompatibility).
+
+  2%|2         | 1/44 [00:00<00:05,  7.58it/s][A[swscaler @ 0x7246200] Warning: data is not aligned! This can lead to a speed loss
+
+ 27%|##7       | 12/44 [00:00<00:00, 60.78it/s][A100%|##########| 44/44 [00:00<00:00, 135.78it/s]
+I0202 16:40:36.292265 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:36.292421 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:36.292428 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:36.292644 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:36.292829 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:36.292941 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:36.293076 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:36.293097 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:36.293104 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:36.293107 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:36.293241 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:36.309938 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:36.608814 24028 PathFinder.cpp:650] Created navmesh with 1086 vertices 568 polygons
+I0202 16:40:36.609012 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:38.251770 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:38.252128 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:38.252136 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:38.252305 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:38.252504 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:38.252614 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:38.252753 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:38.252774 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:38.252782 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:38.252785 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:38.252923 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:38.269346 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:38.566550 24028 PathFinder.cpp:650] Created navmesh with 1093 vertices 572 polygons
+I0202 16:40:38.566733 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:40.195359 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:40.195734 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:40.195744 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:40.195909 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:40.196087 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:40.196238 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:40.196346 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:40.196367 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:40.196375 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:40.196378 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:40.196516 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:40.213418 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:40.506702 24028 PathFinder.cpp:650] Created navmesh with 1093 vertices 572 polygons
+I0202 16:40:40.506794 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:42.131101 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:42.131418 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:42.131428 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:42.131592 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:42.131772 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:42.131883 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:42.132020 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:42.132043 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:42.132051 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:42.132055 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:42.132191 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:42.149044 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:42.440265 24028 PathFinder.cpp:650] Created navmesh with 1093 vertices 572 polygons
+I0202 16:40:42.440433 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:44.118113 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:44.118319 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:44.118324 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:44.118510 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:44.118691 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:44.118851 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:44.118973 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:44.118993 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:44.119001 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:44.119004 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:44.119140 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:44.136231 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:44.441030 24028 PathFinder.cpp:650] Created navmesh with 1095 vertices 574 polygons
+I0202 16:40:44.441146 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:46.109035 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:46.109323 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:46.109330 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:46.109530 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:46.109675 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:46.109830 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:46.109941 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:46.109962 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:46.109970 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:46.109973 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:46.110108 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:46.126916 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:46.422909 24028 PathFinder.cpp:650] Created navmesh with 1098 vertices 576 polygons
+I0202 16:40:46.423084 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:48.062247 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:48.062582 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:48.062590 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:48.062758 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:48.062935 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:48.063084 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:48.063192 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:48.063215 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:48.063222 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:48.063225 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:48.063359 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:48.084304 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:48.375005 24028 PathFinder.cpp:650] Created navmesh with 1098 vertices 576 polygons
+I0202 16:40:48.375183 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:49.999598 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:49.999873 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:49.999887 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:50.000085 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:50.000231 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:50.000372 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:50.000480 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:50.000502 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:50.000510 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:50.000514 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:50.000648 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:50.017508 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:50.314839 24028 PathFinder.cpp:650] Created navmesh with 1098 vertices 576 polygons
+I0202 16:40:50.314932 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:51.937623 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:51.937819 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:51.937826 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:51.938004 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:51.938186 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:51.938335 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:51.938443 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:51.938464 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:51.938472 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:51.938475 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:51.938611 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:51.955612 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:52.249768 24028 PathFinder.cpp:650] Created navmesh with 1100 vertices 580 polygons
+I0202 16:40:52.249884 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:53.911631 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:53.911870 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:53.911877 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:53.912083 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:53.912271 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:53.912403 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:53.912555 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:53.912576 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:53.912585 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:53.912588 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:53.912758 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:53.936797 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:54.231276 24028 PathFinder.cpp:650] Created navmesh with 1100 vertices 580 polygons
+I0202 16:40:54.231447 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:55.889732 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:55.890012 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:55.890019 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:55.890198 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:55.890375 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:55.890523 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:55.890630 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:55.890652 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:55.890661 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:55.890663 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:55.890799 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:55.908172 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:56.239408 24028 PathFinder.cpp:650] Created navmesh with 1103 vertices 581 polygons
+I0202 16:40:56.239573 24028 Simulator.cpp:710] reconstruct navmesh successful
+I0202 16:40:57.891644 24028 AttributesManagerBase.h:214] AttributesManager::loadAllConfigsFromPath : Parsing Object library directory: data/test_assets/objects
+I0202 16:40:57.891934 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 4 Object templates found in data/test_assets/objects
+I0202 16:40:57.891942 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:57.892103 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: donut.object_config.json
+I0202 16:40:57.892278 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: nested_box.object_config.json
+I0202 16:40:57.892390 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: sphere.object_config.json
+I0202 16:40:57.892526 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 4
+I0202 16:40:57.892547 24028 ManagedContainerBase.cpp:19] ManagedContainerBase::convertFilenameToJSON : Filename : data/test_assets/objects/chair changed to proposed JSON configuration filename : data/test_assets/objects/chair.object_config.json
+I0202 16:40:57.892555 24028 AttributesManagerBase.h:179] AttributesManager::loadAllFileBasedTemplates : Loading 1 Object templates found in data/test_assets/objects
+I0202 16:40:57.892558 24028 AttributesManagerBase.h:184] AttributesManager::loadAllFileBasedTemplates : Load Object template: chair.object_config.json
+I0202 16:40:57.892694 24028 AttributesManagerBase.h:197] AttributesManager::loadAllFileBasedTemplates : Loaded file-based Object templates: 1
+I0202 16:40:57.909916 24028 PathFinder.cpp:382] Building navmesh with 417x377 cells
+I0202 16:40:58.203915 24028 PathFinder.cpp:650] Created navmesh with 1103 vertices 581 polygons
+I0202 16:40:58.204099 24028 Simulator.cpp:710] reconstruct navmesh successful
