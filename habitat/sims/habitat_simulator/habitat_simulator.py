@@ -24,6 +24,7 @@ import magnum as mn
 if TYPE_CHECKING:
     from torch import Tensor
 import pdb
+import math
 import habitat_sim
 from habitat.core.dataset import Episode
 from habitat.core.registry import registry
@@ -216,6 +217,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
 
         sim_sensors = []
         for sensor_name in agent_config.SENSORS:
+            #print("AGENT CONFIG SENSORS :  {}".format(agent_config.SENSORS), flush=True)
             sensor_cfg = getattr(self.habitat_config, sensor_name)
             sensor_type = registry.get_sensor(sensor_cfg.TYPE)
 
@@ -369,8 +371,8 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         sim_obs = super().reset()
         self.counter = 0
         if self._update_agents_state():
-            sim_obs = self.get_sensor_observations()
-
+            self.add_robot_embodiment(super())
+            sim_obs = self.get_sensor_observations()    
         self._prev_sim_obs = sim_obs
         return self._sensor_suite.get_observations(sim_obs)
 
@@ -379,7 +381,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         self._prev_sim_obs = sim_obs
         observations = self._sensor_suite.get_observations(sim_obs)
         self.counter += 1
-        if self.counter % 10 == 0:
+        if self.counter % 20 == 0:
             self.init_objects(super())
         return observations
 
@@ -419,17 +421,20 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         obj_attr_mgr.load_configs("data/test_assets/objects")
 
         # Add a chair into the scene.
-        obj_path = "data/test_assets/objects/chair"
+        obj_path = "data/test_assets/objects/locobot_merged"
         chair_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
         chair_attr = obj_attr_mgr.get_template_by_ID(chair_template_id)
         obj_attr_mgr.register_template(chair_attr)
 
         # Object's initial position 3m away from the agent.
         object_id = sim.add_object_by_handle(chair_attr.handle)
-        self.set_object_in_front_of_agent(sim, object_id, -5.0)
+        self.set_object_in_front_of_agent(sim, object_id, -3.0)
         sim.set_object_motion_type(
             habitat_sim.physics.MotionType.STATIC, object_id
         )
+
+        #agent = habitat_sim.Agent(sim.get_active_scene_graph().get_root_node().create_child(), agent_cfg)
+        #agent.controls.move_filter_fn = sim.step_filter
 
         # Object's final position 7m away from the agent
         #goal_id = sim.add_object_by_handle(chair_attr.handle)
@@ -438,6 +443,44 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
 
         return object_id
+
+    def add_robot_embodiment(self, sim):
+        # Manager of Object Attributes Templates
+        obj_attr_mgr = sim.get_object_template_manager()
+        #print("Object Template Manager : {}".format(obj_attr_mgr))
+        #print("SIM Config : ")
+        #print(self.sim_config)
+        #print("Habitat Config: ")
+        #print(self.habitat_config)
+        #obj_attr_mgr.load_configs("data/test_assets/objects")
+
+        # Add a chair into the scene.
+        obj_path = "data/test_assets/objects/locobot_merged"
+        locobot_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
+        #chair_attr = obj_attr_mgr.get_template_by_ID(chair_template_id)
+        #obj_attr_mgr.register_template(chair_attr)
+        # Object's initial position 3m away from the agent.
+        object_id = sim.add_object(locobot_template_id, self.get_agent(0).scene_node)
+
+        sim.set_object_motion_type(habitat_sim.physics.MotionType.KINEMATIC, object_id)
+
+        sim.set_translation(np.array([1.75, -1.02, 0.4]), object_id)
+
+        vel_control = sim.get_object_velocity_control(object_id)
+        vel_control.linear_velocity = np.array([0, 0, -1.0])
+        vel_control.angular_velocity = np.array([0.0, 2.0, 0])
+        #self.set_object_in_front_of_agent(sim, object_id, -3.0)
+        #sim.set_object_motion_type(
+        #    habitat_sim.physics.MotionType.STATIC, object_id
+        #)
+
+        # Object's final position 7m away from the agent
+        #goal_id = sim.add_object_by_handle(chair_attr.handle)
+        #self.set_object_in_front_of_agent(sim, goal_id, -7.0)
+        #sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, goal_id)
+        #self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
+
+        #return object_id
 
     def _initialize_objects(self):
         objects = self.habitat_config.objects[0]
@@ -619,6 +662,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         if agent_id is None:
             agent_id = self.habitat_config.DEFAULT_AGENT_ID
         agent_name = self.habitat_config.AGENTS[agent_id]
+        #print("HABITAT CONFIG : {}".format(self.habitat_config))
         agent_config = getattr(self.habitat_config, agent_name)
         return agent_config
 
