@@ -255,6 +255,8 @@ class EmbodiedTask:
         )
         self._action_keys = list(self.actions.keys())
 
+        
+
     def _init_entities(
         self, entity_names, register_func, entities_config=None
     ) -> OrderedDict:
@@ -277,6 +279,7 @@ class EmbodiedTask:
         return entities
 
     def reset(self, episode: Episode):
+        print("In reset of embodied task", flush=True)
         observations = self._sim.reset()
         observations.update(
             self.sensor_suite.get_observations(

@@ -7,7 +7,7 @@
 # TODO, lots of typing errors in here
 
 from typing import Any, List, Optional, Tuple
-
+import random
 import attr
 import numpy as np
 from gym import spaces
@@ -37,9 +37,9 @@ from habitat.utils.geometry_utils import (
     quaternion_rotate_vector,
 )
 from habitat.utils.visualizations import fog_of_war, maps
-
+import habitat_sim
 try:
-    from habitat.sims.habitat_simulator.habitat_simulator import HabitatSim
+    from habitat.sims.habitat_simulator.habitat_simulator import HabitatSim, overwrite_config
 except ImportError:
     pass
 cv2 = try_cv2_import()
@@ -49,6 +49,7 @@ MAP_THICKNESS_SCALAR: int = 128
 
 
 def merge_sim_episode_config(sim_config: Config, episode: Episode) -> Any:
+
     sim_config.defrost()
     sim_config.SCENE = episode.scene_id
     sim_config.freeze()
@@ -1104,7 +1105,192 @@ class NavigationTask(EmbodiedTask):
         super().__init__(config=config, sim=sim, dataset=dataset)
 
     def overwrite_sim_config(self, sim_config: Any, episode: Episode) -> Any:
+        #sim_config = self.set_multi_agent_episode_config(sim_config, episode) # new
         return merge_sim_episode_config(sim_config, episode)
 
     def _check_episode_is_active(self, *args: Any, **kwargs: Any) -> bool:
         return not getattr(self, "is_stop_called", False)
+
+    def reset(self, episode):
+        self.introduce_dynamic_agents(episode)
+        self.dynamic_agents_step_counter = 0
+        print("Introduced dynamic agents in nav.py reset", flush=True)
+        observations = super().reset(episode=episode)
+
+        return observations
+
+    def step(self, action, episode):
+
+        action_idx_to_action_name = {0 : 'move_forward', 1 : 'turn_left', 2 : 'turn_right'}
+
+        self.dynamic_agents_step_counter += 1
+
+        #if self.dynamic_agents_step_counter % 2 == 0:
+        for dynamic_agent in self.dynamic_agents:
+            random_action_idx = random.choice(list(action_idx_to_action_name.keys()))
+            random_action = action_idx_to_action_name[random_action_idx]
+            dynamic_agent.act(random_action)
+        
+        self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
+
+        observations = super().step(action, episode)
+
+        return observations
+
+
+    def introduce_dynamic_agents(self, episode):
+
+        self.dynamic_agents = []
+
+        _shortest_path_points = (
+            self._sim.get_straight_shortest_path_points(
+                episode.start_position, episode.goals[0].position
+            )
+        )
+
+        # print("PATH POINTS : {}".format(_shortest_path_points), flush=True)
+        # print(len(_shortest_path_points), flush=True)
+
+        num_agents = len(_shortest_path_points) // 4
+
+        if (
+            episode.start_position is not None
+            and episode.start_rotation is not None
+        ):
+
+            random_heading = np.random.uniform(-np.pi, np.pi)
+            random_rotation = [
+                0,
+                np.sin(random_heading / 2),
+                0,
+                np.cos(random_heading / 2),
+            ]
+
+            for agent_idx in range(num_agents):
+                dyn_agent_cfg = habitat_sim.AgentConfiguration()
+                dyn_agent_cfg.sensor_specifications = []
+                # print("DYN AGENT CFG 1153 : {}".format(dyn_agent_cfg), flush=True)
+                agent = habitat_sim.Agent(self._sim.get_active_scene_graph().get_root_node().create_child(), dyn_agent_cfg)
+                agent.controls.move_filter_fn = self._sim.step_filter
+                agent_state = habitat_sim.AgentState()
+                agent_state.position = np.array(_shortest_path_points[4*(agent_idx+1) - 1])  
+                agent_state.rotation = np.array(random_rotation)
+                agent.set_state(agent_state)
+                self.dynamic_agents.append(agent)
+                # print("AGENTS", flush=True)
+                # print(self._sim.agents, flush=True)
+                # print("END OF AGENTS", flush=True)
+                # print("LEN AGENTS : {}".format(len(self._sim.agents)), flush=True)
+                # print("AGENT STATE : {}".format(agent.get_state()), flush=True)
+                # print("AGENT : {}".format(agent), flush=True)
+
+                # Embodiment 
+
+                obj_attr_mgr = self._sim.get_object_template_manager()
+                obj_path = "data/test_assets/objects/locobot_merged"
+                locobot_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
+                object_id = self._sim.add_object(locobot_template_id, agent.scene_node)
+                self._sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, object_id)
+
+                # vel_control = self._sim.get_object_velocity_control(object_id)
+                # vel_control.linear_velocity = np.array([0, 0, -1.0])
+                # vel_control.angular_velocity = np.array([0.0, 2.0, 0])
+            
+                self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
+
+            # print("Number of dynamic agents : {}".format(len(self.dynamic_agents)), flush=True)
+            # print("Dynamic agents : {}".format(self.dynamic_agents), flush=True)
+
+
+    def set_multi_agent_episode_config(self, sim_config: Config, episode: Episode) -> Any:
+
+        if not self._sim.pathfinder.is_loaded:
+            print("Pathfinder not initialized, aborting.")
+        else:
+            seed = 4  # @param {type:"integer"}
+            self._sim.pathfinder.seed(seed)
+
+            # fmt off
+            # @markdown 1. Sample valid points on the NavMesh for agent spawn location and pathfinding goal.
+            # fmt on
+            sample1 = self._sim.pathfinder.get_random_navigable_point()
+            sample2 = self._sim.pathfinder.get_random_navigable_point()
+
+            # @markdown 2. Use ShortestPath module to compute path between samples.
+            _shortest_path_points = (
+                self._sim.get_straight_shortest_path_points(
+                    episode.start_position, episode.goals[0].position
+                )
+            )
+        
+        print("PATH POINTS : {}".format(_shortest_path_points), flush=True)
+        print(len(_shortest_path_points), flush=True)
+
+        num_agents = len(_shortest_path_points) // 4
+
+        sim_config.defrost()
+        sim_config.SCENE = episode.scene_id
+        sim_config.freeze()
+        if (
+            episode.start_position is not None
+            and episode.start_rotation is not None
+        ):
+
+            random_heading = np.random.uniform(-np.pi, np.pi)
+            random_rotation = [
+                0,
+                np.sin(random_heading / 2),
+                0,
+                np.cos(random_heading / 2),
+            ]
+
+            for agent_idx in range(num_agents):
+                sim_config.defrost()
+                #sim_config.AGENTS.append("AGENT_DYN_{}".format(agent_idx))
+                generic_agent_name = 'GENERIC_AGENT'
+                agent_cfg = getattr(sim_config, generic_agent_name)
+                dyn_agent_cfg = habitat_sim.AgentConfiguration()
+                #overwrite_config(agent_cfg, dyn_agent_cfg)
+                dyn_agent_cfg.sensor_specifications = []
+                print("DYN AGENT CFG 1153 : {}".format(dyn_agent_cfg), flush=True)
+                agent = habitat_sim.Agent(self._sim.get_active_scene_graph().get_root_node().create_child(), dyn_agent_cfg)
+                agent.controls.move_filter_fn = self._sim.step_filter
+                agent_state = habitat_sim.AgentState()
+                agent_state.position = np.array(_shortest_path_points[3])  
+                agent_state.rotation = np.array(random_rotation)
+                agent.set_state(agent_state)
+                print("AGENTS", flush=True)
+                print(self._sim.agents, flush=True)
+                print("END OF AGENTS", flush=True)
+                print("LEN AGENTS : {}".format(len(self._sim.agents)), flush=True)
+                print("AGENT STATE : {}".format(agent.get_state()), flush=True)
+
+                obj_attr_mgr = self._sim.get_object_template_manager()
+                obj_path = "data/test_assets/objects/locobot_merged"
+                locobot_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
+                object_id = self._sim.add_object(locobot_template_id, agent.scene_node)
+                self._sim.set_object_motion_type(habitat_sim.physics.MotionType.KINEMATIC, object_id)
+
+                self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
+
+
+
+        return sim_config
+
+        
+
+        # sim_config.defrost()
+        # sim_config.SCENE = episode.scene_id
+        # sim_config.freeze()
+        # if (
+        #     episode.start_position is not None
+        #     and episode.start_rotation is not None
+        # ):
+        #     agent_name = sim_config.AGENTS[sim_config.DEFAULT_AGENT_ID]
+        #     agent_cfg = getattr(sim_config, agent_name)
+        #     agent_cfg.defrost()
+        #     agent_cfg.START_POSITION = episode.start_position
+        #     agent_cfg.START_ROTATION = episode.start_rotation
+        #     agent_cfg.IS_SET_START_STATE = True
+        #     agent_cfg.freeze()
+        # return sim_config

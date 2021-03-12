@@ -216,6 +216,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         agent_config = self._get_agent_config()
 
         sim_sensors = []
+
         for sensor_name in agent_config.SENSORS:
             #print("AGENT CONFIG SENSORS :  {}".format(agent_config.SENSORS), flush=True)
             sensor_cfg = getattr(self.habitat_config, sensor_name)
@@ -368,21 +369,25 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         return is_updated
 
     def reset(self) -> Observations:
+
         sim_obs = super().reset()
         self.counter = 0
+        # agent_cfg = self._get_agent_config(0)
+        # agent1 = habitat_sim.Agent(super().get_active_scene_graph().get_root_node().create_child(), agent_cfg)
+        # agent1.controls.move_filter_fn = super().step_filter
         if self._update_agents_state():
-            self.add_robot_embodiment(super())
             sim_obs = self.get_sensor_observations()    
         self._prev_sim_obs = sim_obs
         return self._sensor_suite.get_observations(sim_obs)
 
     def step(self, action: Union[str, int]) -> Observations:
+
         sim_obs = super().step(action)
         self._prev_sim_obs = sim_obs
         observations = self._sensor_suite.get_observations(sim_obs)
-        self.counter += 1
-        if self.counter % 20 == 0:
-            self.init_objects(super())
+        # self.counter += 1
+        # if self.counter % 5 == 0:
+        #     self.init_objects(super())
         return observations
 
     def set_object_in_front_of_agent(self, sim, obj_id, z_offset=-1.5):
@@ -433,16 +438,14 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
             habitat_sim.physics.MotionType.STATIC, object_id
         )
 
-        #agent = habitat_sim.Agent(sim.get_active_scene_graph().get_root_node().create_child(), agent_cfg)
-        #agent.controls.move_filter_fn = sim.step_filter
-
         # Object's final position 7m away from the agent
-        #goal_id = sim.add_object_by_handle(chair_attr.handle)
-        #self.set_object_in_front_of_agent(sim, goal_id, -7.0)
-        #sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, goal_id)
+        # goal_id = sim.add_object_by_handle(chair_attr.handle)
+        # self.set_object_in_front_of_agent(sim, goal_id, -7.0)
+        # sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, goal_id)
+        print("Object introduced at frame : {}".format(self.counter), flush=True)
         self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
 
-        return object_id
+        #return object_id
 
     def add_robot_embodiment(self, sim):
         # Manager of Object Attributes Templates
@@ -558,6 +561,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
 
         self._update_agents_state()
 
+
     def geodesic_distance(
         self,
         position_a: Union[Sequence[float], ndarray],
@@ -662,8 +666,10 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         if agent_id is None:
             agent_id = self.habitat_config.DEFAULT_AGENT_ID
         agent_name = self.habitat_config.AGENTS[agent_id]
-        #print("HABITAT CONFIG : {}".format(self.habitat_config))
         agent_config = getattr(self.habitat_config, agent_name)
+        #agent_config.SENSORS = ['DEPTH_SENSOR']
+        #setattr(self.habitat_config, agent_config.SENSORS[0], "DEPTH_SENSOR")
+
         return agent_config
 
     def get_agent_state(self, agent_id: int = 0) -> habitat_sim.AgentState:
