@@ -1112,7 +1112,7 @@ class NavigationTask(EmbodiedTask):
         return not getattr(self, "is_stop_called", False)
 
     def reset(self, episode):
-        self.introduce_dynamic_agents(episode)
+        #self.introduce_dynamic_agents(episode)
         self.dynamic_agents_step_counter = 0
         print("Introduced dynamic agents in nav.py reset", flush=True)
         observations = super().reset(episode=episode)
@@ -1126,12 +1126,12 @@ class NavigationTask(EmbodiedTask):
         self.dynamic_agents_step_counter += 1
 
         #if self.dynamic_agents_step_counter % 2 == 0:
-        for dynamic_agent in self.dynamic_agents:
-            random_action_idx = random.choice(list(action_idx_to_action_name.keys()))
-            random_action = action_idx_to_action_name[random_action_idx]
-            dynamic_agent.act(random_action)
+        # for dynamic_agent in self.dynamic_agents:
+        #     random_action_idx = random.choice(list(action_idx_to_action_name.keys()))
+        #     random_action = action_idx_to_action_name[random_action_idx]
+        #     dynamic_agent.act(random_action)
         
-        self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
+        # self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
 
         observations = super().step(action, episode)
 
