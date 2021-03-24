@@ -279,7 +279,6 @@ class EmbodiedTask:
         return entities
 
     def reset(self, episode: Episode):
-        print("In reset of embodied task", flush=True)
         observations = self._sim.reset()
         observations.update(
             self.sensor_suite.get_observations(

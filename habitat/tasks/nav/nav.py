@@ -11,7 +11,7 @@ import random
 import attr
 import numpy as np
 from gym import spaces
-
+import math
 from habitat.config import Config
 from habitat.core.dataset import Dataset, Episode
 from habitat.core.embodied_task import (
@@ -576,6 +576,10 @@ class SPL(Measure):
         self._start_end_episode_distance = task.measurements.measures[
             DistanceToGoal.cls_uuid
         ].get_metric()
+
+        if math.isinf(self._start_end_episode_distance):
+            print("Found episode {} with unreachable goal".format(episode), flush=True)
+
         self.update_metric(  # type:ignore
             episode=episode, task=task, *args, **kwargs
         )
@@ -601,6 +605,11 @@ class SPL(Measure):
                 self._start_end_episode_distance, self._agent_episode_distance
             )
         )
+
+        # print("Updated SPL : {}".format(self._metric), flush=True)
+
+        # if math.isnan(self._metric):
+        #     print("SPL IS NAN!", flush=True)
 
 
 @registry.register_measure
@@ -648,6 +657,9 @@ class SoftSPL(SPL):
                 self._start_end_episode_distance, self._agent_episode_distance
             )
         )
+
+        # if math.isnan(self._metric):
+        #     print("SoftSPL IS NAN!", flush=True)
 
 
 @registry.register_measure
@@ -984,6 +996,11 @@ class DistanceToGoal(Measure):
 
             self._previous_position = current_position
             self._metric = distance_to_target
+        
+        # print("Updated D2G : {}".format(self._metric), flush=True)
+
+        if math.isinf(self._metric):
+            print("D2G IS INF IN EPISODE {}!".format(episode.episode_id), flush=True)
 
 
 @registry.register_task_action
@@ -1102,6 +1119,7 @@ class NavigationTask(EmbodiedTask):
     def __init__(
         self, config: Config, sim: Simulator, dataset: Optional[Dataset] = None
     ) -> None:
+        self.config = config
         super().__init__(config=config, sim=sim, dataset=dataset)
 
     def overwrite_sim_config(self, sim_config: Any, episode: Episode) -> Any:
@@ -1111,36 +1129,49 @@ class NavigationTask(EmbodiedTask):
     def _check_episode_is_active(self, *args: Any, **kwargs: Any) -> bool:
         return not getattr(self, "is_stop_called", False)
 
+    def remove_all_objects(self, sim):
+        for id_ in sim.get_existing_object_ids():
+            sim.remove_object(id_)
+        sim.recompute_navmesh(sim.pathfinder, sim.navmesh_settings, True)
+
     def reset(self, episode):
-        #self.introduce_dynamic_agents(episode)
-        self.dynamic_agents_step_counter = 0
-        print("Introduced dynamic agents in nav.py reset", flush=True)
+        if self.config.FOREIGN_AGENTS:
+            self.remove_all_objects(self._sim)
+            # for agent in self.dynamic_agents:
+            #     agent_state = habitat_sim.AgentState()
+            #     agent_state.position = np.array([])  
+            #     #agent_state.rotation = np.array([])
+            #     agent.set_state(agent_state)
+            self.dynamic_agents = {}
+            #print("Number of foreign agents before : {}".format(len(self.dynamic_agents)), flush=True)
+            #print("Existing object IDs before are : {}".format(self._sim.get_existing_object_ids()), flush=True)
+            self.introduce_foreign_agents(episode)        
+            #print("Number of foreign agents after : {}".format(len(self.dynamic_agents)), flush=True)
+            #print("Existing object IDs after are : {}".format(self._sim.get_existing_object_ids()), flush=True)
+
         observations = super().reset(episode=episode)
 
         return observations
 
     def step(self, action, episode):
 
-        action_idx_to_action_name = {0 : 'move_forward', 1 : 'turn_left', 2 : 'turn_right'}
+        actions = ['move_forward', 'turn_left', 'turn_right']
 
-        self.dynamic_agents_step_counter += 1
-
-        #if self.dynamic_agents_step_counter % 2 == 0:
-        # for dynamic_agent in self.dynamic_agents:
-        #     random_action_idx = random.choice(list(action_idx_to_action_name.keys()))
-        #     random_action = action_idx_to_action_name[random_action_idx]
-        #     dynamic_agent.act(random_action)
+        #self.foreign_agents_step_counter += 1
         
-        # self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
+        if self.config.FOREIGN_AGENTS == 'DYNAMIC':
+            for id, dynamic_agent in self.dynamic_agents.items():
+                random_action = random.sample(actions, 1)
+                dynamic_agent.act(random_action[0])
+            
+            self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
 
         observations = super().step(action, episode)
 
         return observations
 
 
-    def introduce_dynamic_agents(self, episode):
-
-        self.dynamic_agents = []
+    def introduce_foreign_agents(self, episode):
 
         _shortest_path_points = (
             self._sim.get_straight_shortest_path_points(
@@ -1148,8 +1179,9 @@ class NavigationTask(EmbodiedTask):
             )
         )
 
-        # print("PATH POINTS : {}".format(_shortest_path_points), flush=True)
-        # print(len(_shortest_path_points), flush=True)
+        #print("PATH POINTS : {}".format(_shortest_path_points), flush=True)
+        #print("GOAL POSITION : {}".format(episode.goals[0].position), flush=True)
+        #print("Length of shortest path: {}".format(len(_shortest_path_points)), flush=True)
 
         num_agents = len(_shortest_path_points) // 4
 
@@ -1167,16 +1199,19 @@ class NavigationTask(EmbodiedTask):
             ]
 
             for agent_idx in range(num_agents):
+                if (np.array(_shortest_path_points[4*(agent_idx+1) - 1]) == np.array(episode.goals[0].position)).all() or 4*(agent_idx+1) == len(_shortest_path_points):
+                    break
+                #print("AGENT POSITION : {}".format(np.array(_shortest_path_points[4*(agent_idx+1) - 1])), flush=True)
+                #print("GOAL POSITION : {}".format(np.array(episode.goals[0].position)))
                 dyn_agent_cfg = habitat_sim.AgentConfiguration()
                 dyn_agent_cfg.sensor_specifications = []
                 # print("DYN AGENT CFG 1153 : {}".format(dyn_agent_cfg), flush=True)
                 agent = habitat_sim.Agent(self._sim.get_active_scene_graph().get_root_node().create_child(), dyn_agent_cfg)
                 agent.controls.move_filter_fn = self._sim.step_filter
                 agent_state = habitat_sim.AgentState()
-                agent_state.position = np.array(_shortest_path_points[4*(agent_idx+1) - 1])  
+                agent_state.position = _shortest_path_points[4*(agent_idx+1) - 1]  
                 agent_state.rotation = np.array(random_rotation)
                 agent.set_state(agent_state)
-                self.dynamic_agents.append(agent)
                 # print("AGENTS", flush=True)
                 # print(self._sim.agents, flush=True)
                 # print("END OF AGENTS", flush=True)
@@ -1192,11 +1227,29 @@ class NavigationTask(EmbodiedTask):
                 object_id = self._sim.add_object(locobot_template_id, agent.scene_node)
                 self._sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, object_id)
 
+                self.dynamic_agents[object_id] = agent
+
                 # vel_control = self._sim.get_object_velocity_control(object_id)
                 # vel_control.linear_velocity = np.array([0, 0, -1.0])
                 # vel_control.angular_velocity = np.array([0.0, 2.0, 0])
             
                 self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
+
+                _shortest_path_points_final = (
+                    self._sim.get_straight_shortest_path_points(
+                        episode.start_position, episode.goals[0].position
+                    )
+                )
+
+                if _shortest_path_points_final == []:
+                    print("Removing object ID {} from episode {} due to blocking off a path to the goal".format(object_id, episode.episode_id), flush=True)
+                    self._sim.remove_object(object_id)
+                    del self.dynamic_agents[object_id]
+                
+                self._sim.recompute_navmesh(self._sim.pathfinder, self._sim.navmesh_settings, True)
+
+
+                #print("Final waypoints between origin and goal : {}".format(_shortest_path_points_final), flush=True)
 
             # print("Number of dynamic agents : {}".format(len(self.dynamic_agents)), flush=True)
             # print("Dynamic agents : {}".format(self.dynamic_agents), flush=True)
