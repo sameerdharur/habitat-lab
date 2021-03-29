@@ -901,8 +901,9 @@ class PPOTrainer(BaseRLTrainer):
         self.actor_critic = self.agent.actor_critic
 
         # Setting the layer to be used for Grad-CAM
-        gradcam_layer = self.actor_critic.net.visual_encoder.backbone.layer4[2].convs[6].requires_grad_(True)
-        gradcam_layer.register_forward_hook(self.activations_hook)
+        if len(self.config.VIDEO_OPTION) > 0:
+            gradcam_layer = self.actor_critic.net.visual_encoder.backbone.layer4[2].convs[6].requires_grad_(True)
+            gradcam_layer.register_forward_hook(self.activations_hook)
 
         observations = self.envs.reset()
         batch = batch_obs(
@@ -976,19 +977,35 @@ class PPOTrainer(BaseRLTrainer):
             #batch['depth'].requires_grad_(True)
             #batch['rgb'].requires_grad_(True)
 
-            (
+            if len(self.config.VIDEO_OPTION) > 0:
+                (
                     values,
                     actions,
                     actions_log_probs,
                     test_recurrent_hidden_states,
                     distribution, scores, features 
-               ) = self.actor_critic.act(
+                ) = self.actor_critic.act(
                     batch,
                     test_recurrent_hidden_states,
                     prev_actions,
                     not_done_masks,
                     deterministic=False,
-            )
+                )
+            else:
+                with torch.no_grad():
+                    (
+                        values,
+                        actions,
+                        actions_log_probs,
+                        test_recurrent_hidden_states,
+                        distribution, scores, features 
+                    ) = self.actor_critic.act(
+                        batch,
+                        test_recurrent_hidden_states,
+                        prev_actions,
+                        not_done_masks,
+                        deterministic=False,
+                    )
 
             prev_actions.copy_(actions)  # type: ignore
 

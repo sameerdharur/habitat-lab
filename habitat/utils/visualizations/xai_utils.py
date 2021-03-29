@@ -169,6 +169,15 @@ def observations_to_image(observation: Dict, info: Dict) -> np.ndarray:
             agent_radius_px=top_down_map.shape[0] // 16,
         )
 
+        for obstacle_agent_idx in range(len(info["top_down_map"]["obstacle_agent_positions"])):
+            top_down_map = maps.draw_agent(
+            image=top_down_map,
+            agent_center_coord=info["top_down_map"]["obstacle_agent_positions"][obstacle_agent_idx],
+            agent_rotation=info["top_down_map"]["obstacle_agent_rotations"][obstacle_agent_idx],
+            agent_radius_px=top_down_map.shape[0] // 16,
+            agent_type='obstacle_agent',
+            )
+
         if top_down_map.shape[0] > top_down_map.shape[1]:
             top_down_map = np.rot90(top_down_map, 1)
 

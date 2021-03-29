@@ -526,6 +526,17 @@ class Success(Measure):
     def update_metric(
         self, episode, task: EmbodiedTask, *args: Any, **kwargs: Any
     ):
+        scene_id = episode.scene_id
+        
+        static_navmesh_path = scene_id.split('.')[0] + '.navmesh'
+
+        # if (
+        #     hasattr(task, "is_stop_called")
+        #     and task.is_stop_called
+        # ):
+        #     print("NAVMESH PATH RESET TO : {}".format(static_navmesh_path), flush=True)
+        #     self._sim.pathfinder.load_nav_mesh(static_navmesh_path)
+
         distance_to_target = task.measurements.measures[
             DistanceToGoal.cls_uuid
         ].get_metric()
@@ -538,6 +549,9 @@ class Success(Measure):
             self._metric = 1.0
         else:
             self._metric = 0.0
+
+        if math.isinf(distance_to_target) and self._metric == 0.0 and task.is_stop_called:
+            print("FAULTY SUCCESS SET ON EPISODE : {}".format(episode.episode_id))
 
 
 @registry.register_measure
@@ -873,8 +887,8 @@ class TopDownMap(Measure):
 
     def update_metric(self, episode, action, *args: Any, **kwargs: Any):
         self._step_count += 1
-        house_map, map_agent_x, map_agent_y = self.update_map(
-            self._sim.get_agent_state().position
+        house_map, map_agent_x, map_agent_y, obstacle_agent_positions, obstacle_agent_rotations = self.update_map(
+            self._sim.get_agent_state().position, kwargs['task']
         )
 
         self._metric = {
@@ -882,12 +896,19 @@ class TopDownMap(Measure):
             "fog_of_war_mask": self._fog_of_war_mask,
             "agent_map_coord": (map_agent_x, map_agent_y),
             "agent_angle": self.get_polar_angle(),
+            "obstacle_agent_positions": obstacle_agent_positions,
+            "obstacle_agent_rotations": obstacle_agent_rotations
         }
 
-    def get_polar_angle(self):
-        agent_state = self._sim.get_agent_state()
-        # quaternion is in x, y, z, w format
-        ref_rotation = agent_state.rotation
+    def get_polar_angle(self, obstacle_point_rotation=None):
+
+        if not obstacle_point_rotation:
+            agent_state = self._sim.get_agent_state()
+            # quaternion is in x, y, z, w format
+            ref_rotation = agent_state.rotation
+
+        else:
+            ref_rotation = obstacle_point_rotation
 
         heading_vector = quaternion_rotate_vector(
             ref_rotation.inverse(), np.array([0, 0, -1])
@@ -897,13 +918,27 @@ class TopDownMap(Measure):
         z_neg_z_flip = np.pi
         return np.array(phi) + z_neg_z_flip
 
-    def update_map(self, agent_position):
+    def update_map(self, agent_position, task):
         a_x, a_y = maps.to_grid(
             agent_position[2],
             agent_position[0],
             self._top_down_map.shape[0:2],
             sim=self._sim,
         )
+
+        obstacle_agent_positions = []
+        obstacle_agent_rotations = []
+
+        for agent_id, agent in task.dynamic_agents.items():
+            b_x, b_y = maps.to_grid(
+                agent.get_state().position[2],
+                agent.get_state().position[0],
+                self._top_down_map.shape[0:2],
+                sim=self._sim,
+            )
+            obstacle_agent_positions.append((b_x, b_y))
+            obstacle_agent_rotations.append(self.get_polar_angle(agent.get_state().rotation))
+
         # Don't draw over the source point
         if self._top_down_map[a_x, a_y] != maps.MAP_SOURCE_POINT_INDICATOR:
             color = 10 + min(
@@ -922,7 +957,7 @@ class TopDownMap(Measure):
         self.update_fog_of_war_mask(np.array([a_x, a_y]))
 
         self._previous_xy_location = (a_y, a_x)
-        return self._top_down_map, a_x, a_y
+        return self._top_down_map, a_x, a_y, obstacle_agent_positions, obstacle_agent_rotations
 
     def update_fog_of_war_mask(self, agent_position):
         if self._config.FOG_OF_WAR.DRAW:
@@ -979,6 +1014,15 @@ class DistanceToGoal(Measure):
         if self._previous_position is None or not np.allclose(
             self._previous_position, current_position, atol=1e-4
         ):
+            if kwargs['task'].config.FOREIGN_AGENTS == "DYNAMIC":
+                scene_id = episode.scene_id
+                temp_navmesh_path = 'data_temp/' + scene_id.split('.')[0].split('/')[-1] + '_temp.navmesh'
+                static_navmesh_path = scene_id.split('.')[0] + '.navmesh'
+                self._sim.pathfinder.save_nav_mesh(temp_navmesh_path)
+                print('SAVED UPDATED NAVMESH TO "' + temp_navmesh_path + '"')
+                self._sim.pathfinder.load_nav_mesh(static_navmesh_path)
+                print("LOADED THE STATC NAVMESH FROM {}".format(static_navmesh_path), flush=True)
+
             if self._config.DISTANCE_TO == "POINT":
                 distance_to_target = self._sim.geodesic_distance(
                     current_position,
@@ -996,11 +1040,12 @@ class DistanceToGoal(Measure):
 
             self._previous_position = current_position
             self._metric = distance_to_target
+
+            if kwargs['task'].config.FOREIGN_AGENTS == "DYNAMIC":
+                self._sim.pathfinder.load_nav_mesh(temp_navmesh_path)
+                print("LOADED BACK THE UPDATED NAVMESH FROM {}".format(temp_navmesh_path), flush=True)
         
         # print("Updated D2G : {}".format(self._metric), flush=True)
-
-        if math.isinf(self._metric):
-            print("D2G IS INF IN EPISODE {}!".format(episode.episode_id), flush=True)
 
 
 @registry.register_task_action
@@ -1199,7 +1244,8 @@ class NavigationTask(EmbodiedTask):
             ]
 
             for agent_idx in range(num_agents):
-                if (np.array(_shortest_path_points[4*(agent_idx+1) - 1]) == np.array(episode.goals[0].position)).all() or 4*(agent_idx+1) == len(_shortest_path_points):
+                #if self.config.FOREIGN_AGENTS == 'STATIC':
+                if (np.array(_shortest_path_points[4*(agent_idx+1) - 1]) == np.array(episode.goals[0].position)).all() or 2*(agent_idx+1) == len(_shortest_path_points):
                     break
                 #print("AGENT POSITION : {}".format(np.array(_shortest_path_points[4*(agent_idx+1) - 1])), flush=True)
                 #print("GOAL POSITION : {}".format(np.array(episode.goals[0].position)))
@@ -1209,7 +1255,7 @@ class NavigationTask(EmbodiedTask):
                 agent = habitat_sim.Agent(self._sim.get_active_scene_graph().get_root_node().create_child(), dyn_agent_cfg)
                 agent.controls.move_filter_fn = self._sim.step_filter
                 agent_state = habitat_sim.AgentState()
-                agent_state.position = _shortest_path_points[4*(agent_idx+1) - 1]  
+                agent_state.position = _shortest_path_points[2*(agent_idx+1) - 1]  
                 agent_state.rotation = np.array(random_rotation)
                 agent.set_state(agent_state)
                 # print("AGENTS", flush=True)
@@ -1222,7 +1268,9 @@ class NavigationTask(EmbodiedTask):
                 # Embodiment 
 
                 obj_attr_mgr = self._sim.get_object_template_manager()
-                obj_path = "data/test_assets/objects/locobot_merged"
+                #obj_path = "data/test_assets/objects/locobot_merged"
+                random_person = random.sample(['0', '1', '2'], 1)
+                obj_path = "data/test_assets/objects/person_{}".format(random_person[0])
                 locobot_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
                 object_id = self._sim.add_object(locobot_template_id, agent.scene_node)
                 self._sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, object_id)
