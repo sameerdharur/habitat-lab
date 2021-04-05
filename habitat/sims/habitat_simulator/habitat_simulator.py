@@ -107,6 +107,7 @@ class HabitatSimRGBSensor(RGBSensor):
 
         # remove alpha channel
         obs = obs[:, :, :RGBSENSOR_DIMENSION]  # type: ignore[index]
+
         return obs
 
 
@@ -174,11 +175,12 @@ class HabitatSimSemanticSensor(SemanticSensor):
         super().__init__(config=config)
 
     def _get_observation_space(self, *args: Any, **kwargs: Any):
+
         return spaces.Box(
-            low=np.iinfo(np.uint32).min,
-            high=np.iinfo(np.uint32).max,
+            low=np.iinfo(np.uint8).min,
+            high=np.iinfo(np.uint8).max,
             shape=(self.config.HEIGHT, self.config.WIDTH),
-            dtype=np.uint32,
+            dtype=np.uint8,
         )
 
     def get_observation(
@@ -378,6 +380,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         if self._update_agents_state():
             sim_obs = self.get_sensor_observations()    
         self._prev_sim_obs = sim_obs
+        observations = self._sensor_suite.get_observations(sim_obs)
         return self._sensor_suite.get_observations(sim_obs)
 
     def step(self, action: Union[str, int]) -> Observations:

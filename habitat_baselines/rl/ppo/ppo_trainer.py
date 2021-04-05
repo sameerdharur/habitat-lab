@@ -61,7 +61,8 @@ from habitat.utils.visualizations.xai_utils import (
     write_over_gradcam_maps,
     compute_saliency_maps
 )
-
+from PIL import Image
+from habitat_sim.utils.common import d3_40_colors_rgb
 
 @baseline_registry.register_trainer(name="ddppo")
 @baseline_registry.register_trainer(name="ppo")
@@ -1090,7 +1091,13 @@ class PPOTrainer(BaseRLTrainer):
                     gradcam_output = write_over_gradcam_maps(gradcam_output, action_labels[actions.item()], self.frame_count, "GRADCAM")
                     #saliency_output = compute_saliency_maps(scores, actions.item(), batch['depth'], egocentric_view, self.envs.num_envs, self.device)
                     #saliency_output = write_over_gradcam_maps(saliency_output, action_labels[actions.item()], self.frame_count, "SALIENCY")
-                    gradcam_write = np.concatenate((egocentric_view, gradcam_output, top_down_map), axis=1)
+                    semantic_obs =  prior_frame[i]['semantic']
+                    semantic_img = Image.new("P", (semantic_obs.shape[1], semantic_obs.shape[0]))
+                    semantic_img.putpalette(d3_40_colors_rgb.flatten())
+                    semantic_img.putdata((semantic_obs.flatten() % 40).astype(np.uint8))
+                    semantic_img = semantic_img.convert("RGB")
+                    gradcam_write = np.concatenate((egocentric_view, gradcam_output, np.asarray(semantic_img), top_down_map), axis=1)
+                    pdb.set_trace()
                     #gradcam_write = np.concatenate((egocentric_view, gradcam_output, top_down_map), axis=1)
                     #gradcam_write = np.concatenate((egocentric_view, saliency_output, top_down_map), axis=1)
                     gradcam_frames[i].append(gradcam_write)

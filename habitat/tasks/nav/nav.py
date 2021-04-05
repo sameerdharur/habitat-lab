@@ -1180,6 +1180,8 @@ class NavigationTask(EmbodiedTask):
         sim.recompute_navmesh(sim.pathfinder, sim.navmesh_settings, True)
 
     def reset(self, episode):
+        objects = [obj.category.name(mapping="raw") for obj in self._sim.semantic_annotations().objects]
+        print("Objects : {}".format(objects), flush=True)
         if self.config.FOREIGN_AGENTS:
             self.remove_all_objects(self._sim)
             # for agent in self.dynamic_agents:
@@ -1199,6 +1201,8 @@ class NavigationTask(EmbodiedTask):
         return observations
 
     def step(self, action, episode):
+        objects = [obj.category.name(mapping="raw") for obj in self._sim.semantic_annotations().objects]
+        print("Objects : {}".format(objects), flush=True)
 
         actions = ['move_forward', 'turn_left', 'turn_right']
 
@@ -1268,11 +1272,12 @@ class NavigationTask(EmbodiedTask):
                 # Embodiment 
 
                 obj_attr_mgr = self._sim.get_object_template_manager()
-                #obj_path = "data/test_assets/objects/locobot_merged"
-                random_person = random.sample(['0', '1', '2'], 1)
-                obj_path = "data/test_assets/objects/person_{}".format(random_person[0])
+                obj_path = "data/test_assets/objects/locobot_merged"
+                # random_person = random.sample(['0', '1', '2'], 1)
+                # obj_path = "data/test_assets/objects/person_{}".format(random_person[0])
                 locobot_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
                 object_id = self._sim.add_object(locobot_template_id, agent.scene_node)
+                self._sim.set_object_semantic_id(1001, object_id)
                 self._sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, object_id)
 
                 self.dynamic_agents[object_id] = agent
