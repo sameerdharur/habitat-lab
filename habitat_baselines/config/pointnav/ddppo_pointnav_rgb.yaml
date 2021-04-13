@@ -1,0 +1,66 @@
+BASE_TASK_CONFIG_PATH: "configs/tasks/pointnav_gibson.yaml"
+TRAINER_NAME: "ddppo"
+ENV_NAME: "NavRLEnv"
+SIMULATOR_GPU_ID: 0
+TORCH_GPU_ID: 0
+VIDEO_OPTION: []
+TENSORBOARD_DIR: "tb"
+VIDEO_DIR: "/srv/share/sameer/xai-pointnav/saved_data/static_agents_rgb_2"
+#VIDEO_DIR: "/srv/share/sameer/xai-pointnav/saved_data/depth_gc_sal_mp3d_val_2"
+TEST_EPISODE_COUNT: -1
+#EVAL_CKPT_PATH_DIR: "data/new_checkpoints/gibson-2plus-se-resneXt101-lstm1024.pth" # Depth model
+EVAL_CKPT_PATH_DIR: "data/new_checkpoints/gibson-2plus-se-resneXt50-rgb.pth" # RGB model
+NUM_PROCESSES: 1
+SENSORS: ["RGB_SENSOR"]
+CHECKPOINT_FOLDER: "data/new_checkpoints"
+NUM_UPDATES: 10000
+LOG_INTERVAL: 10
+CHECKPOINT_INTERVAL: 250
+
+RL:
+  SUCCESS_REWARD: 2.5
+  PPO:
+    # ppo params
+    clip_param: 0.2
+    ppo_epoch: 2
+    num_mini_batch: 2
+    value_loss_coef: 0.5
+    entropy_coef: 0.01
+    lr: 2.5e-4
+    eps: 1e-5
+    max_grad_norm: 0.2
+    num_steps: 128
+    use_gae: True
+    gamma: 0.99
+    tau: 0.95
+    use_linear_clip_decay: False
+    use_linear_lr_decay: False
+    reward_window_size: 50
+
+    use_normalized_advantage: False
+
+    hidden_size: 512 # For the RGB model
+    #hidden_size: 1024 # For the Depth model
+
+  DDPPO:
+    sync_frac: 0.6
+    # The PyTorch distributed backend to use
+    distrib_backend: GLOO
+    # Visual encoder backbone
+    pretrained_weights: data/ddppo-models/gibson-2plus-se-resneXt50-rgb.pth # RGB model
+    #pretrained_weights: data/ddppo-models/gibson-2plus-se-resneXt101-lstm1024.pth # Depth model
+    # Initialize with pretrained weights
+    pretrained: True
+    # Initialize just the visual encoder backbone with pretrained weights
+    pretrained_encoder: True
+    # Whether or not the visual encoder backbone will be trained.
+    train_encoder: False
+    # Whether or not to reset the critic linear layer
+    reset_critic: True
+
+    # Model parameters
+    #backbone: resnet50
+    backbone: se_resneXt50 # For the RGB model
+    #backbone: se_resneXt101 # For the Depth model
+    rnn_type: LSTM
+    num_recurrent_layers: 2
