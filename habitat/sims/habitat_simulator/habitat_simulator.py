@@ -11,6 +11,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Union,
     cast,
 )
@@ -19,10 +20,11 @@ import numpy as np
 from gym import spaces
 from gym.spaces.box import Box
 from numpy import ndarray
-
+import magnum as mn
 if TYPE_CHECKING:
     from torch import Tensor
-
+import pdb
+import math
 import habitat_sim
 from habitat.core.dataset import Episode
 from habitat.core.registry import registry
@@ -40,19 +42,22 @@ from habitat.core.simulator import (
     VisualObservation,
 )
 from habitat.core.spaces import Space
+from habitat_sim.nav import NavMeshSettings
 
 RGBSENSOR_DIMENSION = 3
 
 
-def overwrite_config(config_from: Config, config_to: Any) -> None:
+def overwrite_config(
+    config_from: Config, config_to: Any, ignore_keys: Optional[Set[str]] = None
+) -> None:
     r"""Takes Habitat Lab config and Habitat-Sim config structures. Overwrites
     Habitat-Sim config with Habitat Lab values, where a field name is present
     in lowercase. Mostly used to avoid :ref:`sim_cfg.field = hapi_cfg.FIELD`
     code.
-
     Args:
         config_from: Habitat Lab config node.
         config_to: Habitat-Sim config structure.
+        ignore_keys: Optional set of keys to ignore in config_to
     """
 
     def if_config_to_lower(config):
@@ -62,16 +67,28 @@ def overwrite_config(config_from: Config, config_to: Any) -> None:
             return config
 
     for attr, value in config_from.items():
-        if hasattr(config_to, attr.lower()):
-            setattr(config_to, attr.lower(), if_config_to_lower(value))
+        low_attr = attr.lower()
+        if ignore_keys is None or low_attr not in ignore_keys:
+            if hasattr(config_to, low_attr):
+                setattr(config_to, low_attr, if_config_to_lower(value))
+            else:
+                raise NameError(
+                    f"""{low_attr} is not found on habitat_sim but is found on habitat_lab config.
+                    It's also not in the list of keys to ignore: {ignore_keys}
+                    Did you make a typo in the config?
+                    If not the version of Habitat Sim may not be compatible with Habitat Lab version: {config_from}
+                    """
+                )
 
 
 @registry.register_sensor
 class HabitatSimRGBSensor(RGBSensor):
     sim_sensor_type: habitat_sim.SensorType
+    sim_sensor_subtype: habitat_sim.SensorSubType
 
     def __init__(self, config: Config) -> None:
         self.sim_sensor_type = habitat_sim.SensorType.COLOR
+        self.sim_sensor_subtype = habitat_sim.SensorSubType.PINHOLE
         super().__init__(config=config)
 
     def _get_observation_space(self, *args: Any, **kwargs: Any) -> Box:
@@ -90,17 +107,20 @@ class HabitatSimRGBSensor(RGBSensor):
 
         # remove alpha channel
         obs = obs[:, :, :RGBSENSOR_DIMENSION]  # type: ignore[index]
+
         return obs
 
 
 @registry.register_sensor
 class HabitatSimDepthSensor(DepthSensor):
     sim_sensor_type: habitat_sim.SensorType
+    sim_sensor_subtype: habitat_sim.SensorSubType
     min_depth_value: float
     max_depth_value: float
 
     def __init__(self, config: Config) -> None:
         self.sim_sensor_type = habitat_sim.SensorType.DEPTH
+        self.sim_sensor_subtype = habitat_sim.SensorSubType.PINHOLE
 
         if config.NORMALIZE_DEPTH:
             self.min_depth_value = 0
@@ -147,17 +167,20 @@ class HabitatSimDepthSensor(DepthSensor):
 @registry.register_sensor
 class HabitatSimSemanticSensor(SemanticSensor):
     sim_sensor_type: habitat_sim.SensorType
+    sim_sensor_subtype: habitat_sim.SensorSubType
 
     def __init__(self, config):
         self.sim_sensor_type = habitat_sim.SensorType.SEMANTIC
+        self.sim_sensor_subtype = habitat_sim.SensorSubType.PINHOLE
         super().__init__(config=config)
 
     def _get_observation_space(self, *args: Any, **kwargs: Any):
+
         return spaces.Box(
-            low=np.iinfo(np.uint32).min,
-            high=np.iinfo(np.uint32).max,
+            low=np.iinfo(np.uint8).min,
+            high=np.iinfo(np.uint8).max,
             shape=(self.config.HEIGHT, self.config.WIDTH),
-            dtype=np.uint32,
+            dtype=np.uint8,
         )
 
     def get_observation(
@@ -195,7 +218,9 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         agent_config = self._get_agent_config()
 
         sim_sensors = []
+
         for sensor_name in agent_config.SENSORS:
+            #print("AGENT CONFIG SENSORS :  {}".format(agent_config.SENSORS), flush=True)
             sensor_cfg = getattr(self.habitat_config, sensor_name)
             sensor_type = registry.get_sensor(sensor_cfg.TYPE)
 
@@ -213,6 +238,13 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         )
         self._prev_sim_obs: Optional[Observations] = None
 
+        # NavMesh related settings :
+        self.navmesh_settings = NavMeshSettings()
+        self.navmesh_settings.set_defaults()
+        self.navmesh_settings.agent_radius = agent_config.RADIUS
+        self.navmesh_settings.agent_height = agent_config.HEIGHT
+
+
     def create_sim_config(
         self, _sensor_suite: SensorSuite
     ) -> habitat_sim.Configuration:
@@ -225,30 +257,85 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         overwrite_config(
             config_from=self.habitat_config.HABITAT_SIM_V0,
             config_to=sim_config,
+            # Ignore key as it gets propogated to sensor below
+            ignore_keys={"gpu_gpu"},
         )
         sim_config.scene_id = self.habitat_config.SCENE
         agent_config = habitat_sim.AgentConfiguration()
         overwrite_config(
-            config_from=self._get_agent_config(), config_to=agent_config
+            config_from=self._get_agent_config(),
+            config_to=agent_config,
+            # These keys are only used by Hab-Lab
+            ignore_keys={
+                "is_set_start_state",
+                # This is the Sensor Config. Unpacked below
+                "sensors",
+                "start_position",
+                "start_rotation",
+            },
         )
 
         sensor_specifications = []
+        VisualSensorTypeSet = {
+            habitat_sim.SensorType.COLOR,
+            habitat_sim.SensorType.DEPTH,
+            habitat_sim.SensorType.SEMANTIC,
+        }
+        CameraSensorSubTypeSet = {
+            habitat_sim.SensorSubType.PINHOLE,
+            habitat_sim.SensorSubType.ORTHOGRAPHIC,
+        }
         for sensor in _sensor_suite.sensors.values():
-            sim_sensor_cfg = habitat_sim.SensorSpec()
+
+            # Check if type VisualSensorSpec, we know that Sensor is one of HabitatSimRGBSensor, HabitatSimDepthSensor, HabitatSimSemanticSensor
+            if (
+                getattr(sensor, "sim_sensor_type", [])
+                not in VisualSensorTypeSet
+            ):
+                raise ValueError(
+                    f"""{getattr(sensor, "sim_sensor_type", [])} is an illegal sensorType that is not implemented yet"""
+                )
+            # Check if type CameraSensorSpec
+            if (
+                getattr(sensor, "sim_sensor_subtype", [])
+                not in CameraSensorSubTypeSet
+            ):
+                raise ValueError(
+                    f"""{getattr(sensor, "sim_sensor_subtype", [])} is an illegal sensorSubType for a VisualSensor"""
+                )
+
+            # TODO: Implement checks for other types of SensorSpecs
+
+            sim_sensor_cfg = habitat_sim.CameraSensorSpec()
+            # TODO Handle configs for custom VisualSensors that might need
+            # their own ignore_keys. Maybe with special key / checking
+            # SensorType
             overwrite_config(
-                config_from=sensor.config, config_to=sim_sensor_cfg
+                config_from=sensor.config,
+                config_to=sim_sensor_cfg,
+                # These keys are only used by Hab-Lab
+                # or translated into the sensor config manually
+                ignore_keys={
+                    "height",
+                    "hfov",
+                    "max_depth",
+                    "min_depth",
+                    "normalize_depth",
+                    "type",
+                    "width",
+                },
             )
             sim_sensor_cfg.uuid = sensor.uuid
             sim_sensor_cfg.resolution = list(
                 sensor.observation_space.shape[:2]
             )
-            sim_sensor_cfg.parameters["hfov"] = str(sensor.config.HFOV)
 
             # TODO(maksymets): Add configure method to Sensor API to avoid
             # accessing child attributes through parent interface
             # We know that the Sensor has to be one of these Sensors
             sensor = cast(HabitatSimVizSensors, sensor)
             sim_sensor_cfg.sensor_type = sensor.sim_sensor_type
+            sim_sensor_cfg.sensor_subtype = sensor.sim_sensor_subtype
             sim_sensor_cfg.gpu2gpu_transfer = (
                 self.habitat_config.HABITAT_SIM_V0.GPU_GPU
             )
@@ -284,18 +371,165 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         return is_updated
 
     def reset(self) -> Observations:
-        sim_obs = super().reset()
-        if self._update_agents_state():
-            sim_obs = self.get_sensor_observations()
 
+        sim_obs = super().reset()
+        self.counter = 0
+        # agent_cfg = self._get_agent_config(0)
+        # agent1 = habitat_sim.Agent(super().get_active_scene_graph().get_root_node().create_child(), agent_cfg)
+        # agent1.controls.move_filter_fn = super().step_filter
+        if self._update_agents_state():
+            sim_obs = self.get_sensor_observations()    
         self._prev_sim_obs = sim_obs
+        observations = self._sensor_suite.get_observations(sim_obs)
         return self._sensor_suite.get_observations(sim_obs)
 
     def step(self, action: Union[str, int]) -> Observations:
+
         sim_obs = super().step(action)
         self._prev_sim_obs = sim_obs
         observations = self._sensor_suite.get_observations(sim_obs)
+        # self.counter += 1
+        # if self.counter % 5 == 0:
+        #     self.init_objects(super())
         return observations
+
+    def set_object_in_front_of_agent(self, sim, obj_id, z_offset=-1.5):
+        r"""
+        Adds an object in front of the agent at some distance.
+        """
+        #print("Agent : ")
+        #print(self.get_agent(0))
+        #agent_transform = sim.agents[0].scene_node.transformation_matrix()
+        agent_transform = self.get_agent(0).scene_node.transformation_matrix()
+        obj_translation = agent_transform.transform_point(
+            np.array([0, 0, z_offset])
+        )
+        sim.set_translation(obj_translation, obj_id)
+
+        obj_node = sim.get_object_scene_node(obj_id)
+        xform_bb = habitat_sim.geo.get_transformed_bb(
+            obj_node.cumulative_bb, obj_node.transformation
+        )
+
+        # also account for collision margin of the scene
+        scene_collision_margin = 0.04
+        y_translation = mn.Vector3(
+            0, xform_bb.size_y() / 2.0 + scene_collision_margin, 0
+        )
+        sim.set_translation(y_translation + sim.get_translation(obj_id), obj_id)
+
+    def init_objects(self, sim):
+        # Manager of Object Attributes Templates
+        obj_attr_mgr = sim.get_object_template_manager()
+        #print("Object Template Manager : {}".format(obj_attr_mgr))
+        #print("SIM Config : ")
+        #print(self.sim_config)
+        #print("Habitat Config: ")
+        #print(self.habitat_config)
+        obj_attr_mgr.load_configs("data/test_assets/objects")
+
+        # Add a chair into the scene.
+        obj_path = "data/test_assets/objects/locobot_merged"
+        chair_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
+        chair_attr = obj_attr_mgr.get_template_by_ID(chair_template_id)
+        obj_attr_mgr.register_template(chair_attr)
+
+        # Object's initial position 3m away from the agent.
+        object_id = sim.add_object_by_handle(chair_attr.handle)
+        self.set_object_in_front_of_agent(sim, object_id, -3.0)
+        sim.set_object_motion_type(
+            habitat_sim.physics.MotionType.STATIC, object_id
+        )
+
+        # Object's final position 7m away from the agent
+        # goal_id = sim.add_object_by_handle(chair_attr.handle)
+        # self.set_object_in_front_of_agent(sim, goal_id, -7.0)
+        # sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, goal_id)
+        print("Object introduced at frame : {}".format(self.counter), flush=True)
+        self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
+
+        #return object_id
+
+    def add_robot_embodiment(self, sim):
+        # Manager of Object Attributes Templates
+        obj_attr_mgr = sim.get_object_template_manager()
+        #print("Object Template Manager : {}".format(obj_attr_mgr))
+        #print("SIM Config : ")
+        #print(self.sim_config)
+        #print("Habitat Config: ")
+        #print(self.habitat_config)
+        #obj_attr_mgr.load_configs("data/test_assets/objects")
+
+        # Add a chair into the scene.
+        obj_path = "data/test_assets/objects/locobot_merged"
+        locobot_template_id = obj_attr_mgr.load_object_configs(obj_path)[0]
+        #chair_attr = obj_attr_mgr.get_template_by_ID(chair_template_id)
+        #obj_attr_mgr.register_template(chair_attr)
+        # Object's initial position 3m away from the agent.
+        object_id = sim.add_object(locobot_template_id, self.get_agent(0).scene_node)
+
+        sim.set_object_motion_type(habitat_sim.physics.MotionType.KINEMATIC, object_id)
+
+        sim.set_translation(np.array([1.75, -1.02, 0.4]), object_id)
+
+        vel_control = sim.get_object_velocity_control(object_id)
+        vel_control.linear_velocity = np.array([0, 0, -1.0])
+        vel_control.angular_velocity = np.array([0.0, 2.0, 0])
+        #self.set_object_in_front_of_agent(sim, object_id, -3.0)
+        #sim.set_object_motion_type(
+        #    habitat_sim.physics.MotionType.STATIC, object_id
+        #)
+
+        # Object's final position 7m away from the agent
+        #goal_id = sim.add_object_by_handle(chair_attr.handle)
+        #self.set_object_in_front_of_agent(sim, goal_id, -7.0)
+        #sim.set_object_motion_type(habitat_sim.physics.MotionType.STATIC, goal_id)
+        #self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
+
+        #return object_id
+
+    def _initialize_objects(self):
+        objects = self.habitat_config.objects[0]
+        obj_attr_mgr = self.get_object_template_manager()
+        obj_attr_mgr.load_configs(
+            str(os.path.join(data_path, "test_assets/objects"))
+        )
+        # first remove all existing objects
+        existing_object_ids = self.get_existing_object_ids()
+
+        if len(existing_object_ids) > 0:
+            for obj_id in existing_object_ids:
+                self.remove_object(obj_id)
+
+        self.sim_object_to_objid_mapping = {}
+        self.objid_to_sim_object_mapping = {}
+
+        if objects is not None:
+            object_template = objects["object_template"]
+            object_pos = objects["position"]
+            object_rot = objects["rotation"]
+
+            object_template_id = obj_attr_mgr.load_object_configs(
+                object_template
+            )[0]
+            object_attr = obj_attr_mgr.get_template_by_ID(object_template_id)
+            obj_attr_mgr.register_template(object_attr)
+
+            object_id = self.add_object_by_handle(object_attr.handle)
+            self.sim_object_to_objid_mapping[object_id] = objects["object_id"]
+            self.objid_to_sim_object_mapping[objects["object_id"]] = object_id
+
+            self.set_translation(object_pos, object_id)
+            if isinstance(object_rot, list):
+                object_rot = quat_from_coeffs(object_rot)
+
+            object_rot = quat_to_magnum(object_rot)
+            self.set_rotation(object_rot, object_id)
+
+            self.set_object_motion_type(MotionType.STATIC, object_id)
+
+        # Recompute the navmesh after placing all the objects.
+        self.recompute_navmesh(self.pathfinder, self.navmesh_settings, True)
 
     def render(self, mode: str = "rgb") -> Any:
         r"""
@@ -329,6 +563,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
             super().reconfigure(self.sim_config)
 
         self._update_agents_state()
+
 
     def geodesic_distance(
         self,
@@ -435,6 +670,9 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
             agent_id = self.habitat_config.DEFAULT_AGENT_ID
         agent_name = self.habitat_config.AGENTS[agent_id]
         agent_config = getattr(self.habitat_config, agent_name)
+        #agent_config.SENSORS = ['DEPTH_SENSOR']
+        #setattr(self.habitat_config, agent_config.SENSORS[0], "DEPTH_SENSOR")
+
         return agent_config
 
     def get_agent_state(self, agent_id: int = 0) -> habitat_sim.AgentState:

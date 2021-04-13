@@ -7,7 +7,6 @@
 from typing import Tuple
 
 import torch
-from torch import Tensor
 from torch import distributed as distrib
 
 from habitat_baselines.common.rollout_storage import RolloutStorage
@@ -32,22 +31,41 @@ def distributed_mean_and_var(
     assert distrib.is_initialized(), "Distributed must be initialized"
 
     world_size = distrib.get_world_size()
+
     mean = values.mean()
     distrib.all_reduce(mean)
     mean = mean / world_size
 
-    sq_diff = (values - mean).pow(2).mean()
-    distrib.all_reduce(sq_diff)
-    var = sq_diff / world_size
+    var = (values - mean).pow(2).mean()
+    distrib.all_reduce(var)
+    var = var / world_size
 
     return mean, var
+
+
+class _EvalActionsWrapper(torch.nn.Module):
+    r"""Wrapper on evaluate_actions that allows that to be called from forward.
+    This is needed to interface with DistributedDataParallel's forward call
+    """
+
+    def __init__(self, actor_critic):
+        super().__init__()
+        self.actor_critic = actor_critic
+
+    def forward(self, *args, **kwargs):
+        return self.actor_critic.evaluate_actions(*args, **kwargs)
 
 
 class DecentralizedDistributedMixin:
     def _get_advantages_distributed(
         self, rollouts: RolloutStorage
     ) -> torch.Tensor:
-        advantages = rollouts.returns[:-1] - rollouts.value_preds[:-1]
+        advantages = (
+            rollouts.buffers["returns"][: rollouts.current_rollout_step_idx]
+            - rollouts.buffers["value_preds"][
+                : rollouts.current_rollout_step_idx
+            ]
+        )
         if not self.use_normalized_advantage:  # type: ignore
             return advantages
 
@@ -73,24 +91,28 @@ class DecentralizedDistributedMixin:
             def __init__(self, model, device):
                 if torch.cuda.is_available():
                     self.ddp = torch.nn.parallel.DistributedDataParallel(
-                        model, device_ids=[device], output_device=device
+                        model,
+                        device_ids=[device],
+                        output_device=device,
+                        find_unused_parameters=find_unused_params,
                     )
                 else:
-                    self.ddp = torch.nn.parallel.DistributedDataParallel(model)
+                    self.ddp = torch.nn.parallel.DistributedDataParallel(
+                        model,
+                        find_unused_parameters=find_unused_params,
+                    )
 
-        self._ddp_hooks = Guard(self.actor_critic, self.device)  # type: ignore
-        self.get_advantages = self._get_advantages_distributed
+        self._evaluate_actions_wrapper = Guard(_EvalActionsWrapper(self.actor_critic), self.device)  # type: ignore
 
-        self.reducer = self._ddp_hooks.ddp.reducer
-        self.find_unused_params = find_unused_params
-
-    def before_backward(self, loss: Tensor) -> None:
-        super().before_backward(loss)  # type: ignore
-
-        if self.find_unused_params:
-            self.reducer.prepare_for_backward([loss])  # type: ignore
-        else:
-            self.reducer.prepare_for_backward([])  # type: ignore
+    def _evaluate_actions(
+        self, observations, rnn_hidden_states, prev_actions, masks, action
+    ):
+        r"""Internal method that calls Policy.evaluate_actions.  This is used instead of calling
+        that directly so that that call can be overrided with inheritence
+        """
+        return self._evaluate_actions_wrapper.ddp(
+            observations, rnn_hidden_states, prev_actions, masks, action
+        )
 
 
 class DDPPO(DecentralizedDistributedMixin, PPO):

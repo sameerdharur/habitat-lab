@@ -16,6 +16,7 @@ from habitat import Config, logger
 from habitat.core.env import Env, RLEnv
 from habitat.core.vector_env import VectorEnv
 from habitat_baselines.common.tensorboard_utils import TensorboardWriter
+from habitat_baselines.rl.ddppo.ddp_utils import SAVE_STATE, is_slurm_batch_job
 from habitat_baselines.utils.common import (
     get_checkpoint_id,
     poll_checkpoint_folder,
@@ -150,13 +151,93 @@ class BaseRLTrainer(BaseTrainer):
     device: torch.device  # type: ignore
     config: Config
     video_option: List[str]
+    num_updates_done: int
+    num_steps_done: int
     _flush_secs: int
+    _last_checkpoint_percent: float
 
     def __init__(self, config: Config) -> None:
         super().__init__()
         assert config is not None, "needs config file to initialize trainer"
         self.config = config
         self._flush_secs = 30
+        self.num_updates_done = 0
+        self.num_steps_done = 0
+        self._last_checkpoint_percent = -1.0
+
+        if config.NUM_UPDATES != -1 and config.TOTAL_NUM_STEPS != -1:
+            raise RuntimeError(
+                "NUM_UPDATES and TOTAL_NUM_STEPS are both specified.  One must be -1.\n"
+                " NUM_UPDATES: {} TOTAL_NUM_STEPS: {}".format(
+                    config.NUM_UPDATES, config.TOTAL_NUM_STEPS
+                )
+            )
+
+        if config.NUM_UPDATES == -1 and config.TOTAL_NUM_STEPS == -1:
+            raise RuntimeError(
+                "One of NUM_UPDATES and TOTAL_NUM_STEPS must be specified.\n"
+                " NUM_UPDATES: {} TOTAL_NUM_STEPS: {}".format(
+                    config.NUM_UPDATES, config.TOTAL_NUM_STEPS
+                )
+            )
+
+        if config.NUM_CHECKPOINTS != -1 and config.CHECKPOINT_INTERVAL != -1:
+            raise RuntimeError(
+                "NUM_CHECKPOINTS and CHECKPOINT_INTERVAL are both specified."
+                "  One must be -1.\n"
+                " NUM_CHECKPOINTS: {} CHECKPOINT_INTERVAL: {}".format(
+                    config.NUM_CHECKPOINTS, config.CHECKPOINT_INTERVAL
+                )
+            )
+
+        if config.NUM_CHECKPOINTS == -1 and config.CHECKPOINT_INTERVAL == -1:
+            raise RuntimeError(
+                "One of NUM_CHECKPOINTS and CHECKPOINT_INTERVAL must be specified"
+                " NUM_CHECKPOINTS: {} CHECKPOINT_INTERVAL: {}".format(
+                    config.NUM_CHECKPOINTS, config.CHECKPOINT_INTERVAL
+                )
+            )
+
+    def percent_done(self) -> float:
+        if self.config.NUM_UPDATES != -1:
+            return self.num_updates_done / self.config.NUM_UPDATES
+        else:
+            return self.num_steps_done / self.config.TOTAL_NUM_STEPS
+
+    def is_done(self) -> bool:
+        return self.percent_done() >= 1.0
+
+    def should_checkpoint(self) -> bool:
+        needs_checkpoint = False
+        if self.config.NUM_CHECKPOINTS != -1:
+            checkpoint_every = 1 / self.config.NUM_CHECKPOINTS
+            if (
+                self._last_checkpoint_percent + checkpoint_every
+                < self.percent_done()
+            ):
+                needs_checkpoint = True
+                self._last_checkpoint_percent = self.percent_done()
+        else:
+            needs_checkpoint = (
+                self.num_updates_done % self.config.CHECKPOINT_INTERVAL
+            ) == 0
+
+        return needs_checkpoint
+
+    def _should_save_resume_state(self) -> bool:
+        return SAVE_STATE.is_set() or (
+            (
+                not self.config.RL.preemption.save_state_batch_only
+                or is_slurm_batch_job()
+            )
+            and (
+                (
+                    int(self.num_updates_done + 1)
+                    % self.config.RL.preemption.save_resume_state_interval
+                )
+                == 0
+            )
+        )
 
     @property
     def flush_secs(self):
@@ -222,7 +303,7 @@ class BaseRLTrainer(BaseTrainer):
 
             # indexing along the batch dimensions
             test_recurrent_hidden_states = test_recurrent_hidden_states[
-                :, state_index
+                state_index
             ]
             not_done_masks = not_done_masks[state_index]
             current_episode_reward = current_episode_reward[state_index]

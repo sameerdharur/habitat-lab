@@ -30,7 +30,18 @@ AGENT_SPRITE = imageio.imread(
         "100x100.png",
     )
 )
+
+AGENT_OBSTACLE = imageio.imread(
+    os.path.join(
+        os.path.dirname(__file__),
+        "assets",
+        "maps_topdown_agent_obstacle",
+        "100x100.png",
+    )
+)
+
 AGENT_SPRITE = np.ascontiguousarray(np.flipud(AGENT_SPRITE))
+AGENT_OBSTACLE = np.ascontiguousarray(np.flipud(AGENT_OBSTACLE))
 
 MAP_INVALID_POINT = 0
 MAP_VALID_POINT = 1
@@ -59,6 +70,7 @@ def draw_agent(
     agent_center_coord: Tuple[int, int],
     agent_rotation: float,
     agent_radius_px: int = 5,
+    agent_type=None
 ) -> np.ndarray:
     r"""Return an image with the agent image composited onto it.
     Args:
@@ -70,13 +82,18 @@ def draw_agent(
         The modified background image. This operation is in place.
     """
 
+    if agent_type == 'obstacle_agent':
+        agent_pattern = AGENT_OBSTACLE
+    else:
+        agent_pattern = AGENT_SPRITE
+
     # Rotate before resize to keep good resolution.
     rotated_agent = scipy.ndimage.interpolation.rotate(
-        AGENT_SPRITE, agent_rotation * 180 / np.pi
+        agent_pattern, agent_rotation * 180 / np.pi
     )
     # Rescale because rotation may result in larger image than original, but
     # the agent sprite size should stay the same.
-    initial_agent_size = AGENT_SPRITE.shape[0]
+    initial_agent_size = agent_pattern.shape[0]
     new_size = rotated_agent.shape[0]
     agent_size_px = max(
         1, int(agent_radius_px * 2 * new_size / initial_agent_size)

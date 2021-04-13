@@ -255,6 +255,8 @@ class EmbodiedTask:
         )
         self._action_keys = list(self.actions.keys())
 
+        
+
     def _init_entities(
         self, entity_names, register_func, entities_config=None
     ) -> OrderedDict:

@@ -217,6 +217,7 @@ class Env:
             self._current_episode._shortest_path_cache = None
 
         self._current_episode = next(self._episode_iterator)
+
         self.reconfigure(self._config)
 
         observations = self.task.reset(episode=self.current_episode)
@@ -290,6 +291,7 @@ class Env:
         self._config = config
 
         self._config.defrost()
+
         self._config.SIMULATOR = self._task.overwrite_sim_config(
             self._config.SIMULATOR, self.current_episode
         )
